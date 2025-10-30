@@ -1,4 +1,3 @@
-# `/tmp`
+# `/out`
 
-Files that should be gitignored.
-CSV files, sqlite database files, input files etc.
+JSONL files that this program outputs
