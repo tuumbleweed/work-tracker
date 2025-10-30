@@ -12,7 +12,13 @@ import (
 	"my-project/src/pkg/logger"
 )
 
-func NewTrackerApp(appId, windowTitle, workDir string, uiInterval, chunkInterval time.Duration) (trackerApp *TrackerApp, e *er.Error) {
+func InitializeTrackerApp(appId, windowTitle, workDir string, uiInterval, chunkInterval time.Duration) (trackerApp *TrackerApp, e *er.Error) {
+	logger.Log(
+		logger.Important, logger.BoldBlueColor,
+		"%s tracker app. App id: '%s', window title: '%s', work dir: '%s', ui interval: %s, chunk interval: '%s'",
+		"Initializing", appId, windowTitle, workDir, uiInterval, chunkInterval,
+	)
+
 	trackerApp = &TrackerApp{}
 	trackerApp.WorktrackerApp = app.NewWithID(appId)
 	trackerApp.WorktrackerWindow = trackerApp.WorktrackerApp.NewWindow(windowTitle)
@@ -44,7 +50,12 @@ func NewTrackerApp(appId, windowTitle, workDir string, uiInterval, chunkInterval
 	}
 
 	logger.Log(
-		logger.Notice, logger.CyanColor,
+		logger.Important1, logger.BoldGreenColor,
+		"%s tracker app. App id: '%s', window title: '%s', work dir: '%s', ui interval: %s, chunk interval: '%s'",
+		"Initialized", appId, windowTitle, workDir, uiInterval, chunkInterval,
+	)
+	logger.Log(
+		logger.Notice, logger.BoldCyanColor,
 		"\nWorkDir: '%s'\nCurrendDateID: '%s'\nCurrentFilePath: '%s'\nTotalDuration: '%s'\nTotalActiveTime: '%s'",
 		trackerApp.Workdir, trackerApp.CurrentDateID, trackerApp.CurrentFilePath,
 		trackerApp.TotalDuration, trackerApp.TotalActiveTime,

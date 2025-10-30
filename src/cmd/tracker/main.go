@@ -33,6 +33,6 @@ func main() {
 
 	util.CreateDirIfDoesntExist(*workDir).QuitIf("error")
 
-	_, e := worktracker.NewTrackerApp("Worktracker", "Work Tracker", *workDir, *uiInterval, *chunkInterval)
+	_, e := worktracker.InitializeTrackerApp("Worktracker", "Work Tracker", *workDir, *uiInterval, *chunkInterval)
 	e.QuitIf("error")
 }
