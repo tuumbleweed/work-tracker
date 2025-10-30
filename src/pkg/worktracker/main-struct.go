@@ -1,6 +1,7 @@
 package worktracker
 
 import (
+	"sync"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -8,8 +9,8 @@ import (
 )
 
 type TrackerApp struct {
-	WorktrackerApp    fyne.App
-	WorktrackerWindow fyne.Window
+	App    fyne.App
+	Window fyne.Window
 
 	// UI elements
 	Clock  *widget.Label
@@ -17,8 +18,11 @@ type TrackerApp struct {
 	Button *widget.Button
 
 	// tickers
-	UITicker        *time.Ticker // 1s UI clock
-	ChunkSaveTicker *time.Ticker // file chunk save clock
+	Ticker      *time.Ticker // UI and activity clock
+	FlushTicker *time.Ticker // file chunk save clock
+	TickInterval time.Duration // for Ticker
+	FlushInterval time.Duration // for FlushTicker
+	done        chan struct{}
 
 	// dirs
 	Workdir         string
@@ -26,9 +30,14 @@ type TrackerApp struct {
 	CurrentFilePath string
 
 	// time
-	TotalDuration   time.Duration // for how long user tracked time today
-	TotalActiveTime time.Duration // how much out of that time user was active
+	WorkedToday            time.Duration // for how long user tracked time today
+	ActiveToday            time.Duration // how much out of that time user was active
+	LastTickActiveDuration time.Duration // how much out of that user was active
 
-	// activity
-	InstantActivity time.Duration // recent poll window
+	// mutex
+	Mutex sync.Mutex
+
+	// run info
+	IsRunning bool
+	RunStart  time.Time // when last pressed "start" button
 }

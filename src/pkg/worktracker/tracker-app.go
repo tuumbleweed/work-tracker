@@ -12,17 +12,17 @@ import (
 	"my-project/src/pkg/logger"
 )
 
-func InitializeTrackerApp(appId, windowTitle, workDir string, uiInterval, chunkInterval time.Duration) (trackerApp *TrackerApp, e *er.Error) {
+func InitializeTrackerApp(appId, windowTitle, workDir string, tickInterval, flushInterval time.Duration) (trackerApp *TrackerApp, e *er.Error) {
 	logger.Log(
 		logger.Important, logger.BoldBlueColor,
-		"%s tracker app. App id: '%s', window title: '%s', work dir: '%s', ui interval: %s, chunk interval: '%s'",
-		"Initializing", appId, windowTitle, workDir, uiInterval, chunkInterval,
+		"%s tracker app. App id: '%s', window title: '%s', work dir: '%s', tick interval: %s, flush interval: '%s'",
+		"Initializing", appId, windowTitle, workDir, tickInterval, flushInterval,
 	)
 
 	trackerApp = &TrackerApp{}
-	trackerApp.WorktrackerApp = app.NewWithID(appId)
-	trackerApp.WorktrackerWindow = trackerApp.WorktrackerApp.NewWindow(windowTitle)
-	trackerApp.WorktrackerWindow.Resize(fyne.NewSize(420, 220))
+	trackerApp.App = app.NewWithID(appId)
+	trackerApp.Window = trackerApp.App.NewWindow(windowTitle)
+	trackerApp.Window.Resize(fyne.NewSize(420, 220))
 
 	// clock widget
 	trackerApp.Clock = widget.NewLabel("00:00:00")
@@ -44,21 +44,28 @@ func InitializeTrackerApp(appId, windowTitle, workDir string, uiInterval, chunkI
 	trackerApp.CurrentFilePath = dayFilePath(trackerApp.Workdir, trackerApp.CurrentDateID)
 
 	// get information about total duration and active time
-	trackerApp.TotalDuration, trackerApp.TotalActiveTime, e = loadFileActivityAndDuration(trackerApp.CurrentFilePath)
+	trackerApp.WorkedToday, trackerApp.ActiveToday, e = loadFileActivityAndDuration(trackerApp.CurrentFilePath)
 	if e != nil {
 		return trackerApp, e
 	}
 
+	// initialize tickers
+	trackerApp.TickInterval = tickInterval
+	trackerApp.FlushInterval = flushInterval
+	trackerApp.Ticker = time.NewTicker(trackerApp.TickInterval)
+	trackerApp.FlushTicker = time.NewTicker(trackerApp.FlushInterval)
+	trackerApp.done = make(chan struct{})
+
 	logger.Log(
 		logger.Important1, logger.BoldGreenColor,
-		"%s tracker app. App id: '%s', window title: '%s', work dir: '%s', ui interval: %s, chunk interval: '%s'",
-		"Initialized", appId, windowTitle, workDir, uiInterval, chunkInterval,
+		"%s tracker app. App id: '%s', window title: '%s', work dir: '%s', tick interval: %s, flush interval: '%s'",
+		"Initialized", appId, windowTitle, workDir, tickInterval, flushInterval,
 	)
 	logger.Log(
 		logger.Notice, logger.BoldCyanColor,
-		"\nWorkDir: '%s'\nCurrendDateID: '%s'\nCurrentFilePath: '%s'\nTotalDuration: '%s'\nTotalActiveTime: '%s'",
+		"\nWorkDir: '%s'\nCurrendDateID: '%s'\nCurrentFilePath: '%s'\nWorkedToday: '%s'\nActiveToday: '%s'",
 		trackerApp.Workdir, trackerApp.CurrentDateID, trackerApp.CurrentFilePath,
-		trackerApp.TotalDuration, trackerApp.TotalActiveTime,
+		trackerApp.WorkedToday, trackerApp.ActiveToday,
 	)
 	return trackerApp, nil
 }

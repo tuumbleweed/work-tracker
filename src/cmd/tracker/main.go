@@ -19,8 +19,8 @@ func main() {
 	logDirOverride := flag.String("log-dir", "", "File directory at which to save log files. Keep empty to use configuration file instead.")
 	configPath := flag.String("config", "./cfg/config.json", "Path to your configuration file.")
 	// program's custom flags
-	uiInterval := flag.Duration("ui-update-interval", 1*time.Second, "UI update period (e.g. 2m, 10m, 1h)")
-	chunkInterval := flag.Duration("chunk-save-interval", 1*time.Second, "Autosave period (e.g. 2m, 10m, 1h)")
+	uiInterval := flag.Duration("tick-interval", 1*time.Second, "UI and activity update period (e.g. 2m, 10m, 1h)")
+	chunkInterval := flag.Duration("flush-interval", 1*time.Second, "Autosave period (e.g. 2m, 10m, 1h)")
 	workDir := flag.String("work-dir", "./out", "Directory for daily JSONL files")
 	// parse and init config
 	flag.Parse()
@@ -33,6 +33,7 @@ func main() {
 
 	util.CreateDirIfDoesntExist(*workDir).QuitIf("error")
 
-	_, e := worktracker.InitializeTrackerApp("Worktracker", "Work Tracker", *workDir, *uiInterval, *chunkInterval)
+	trackerApp, e := worktracker.InitializeTrackerApp("Worktracker", "Work Tracker", *workDir, *uiInterval, *chunkInterval)
 	e.QuitIf("error")
+	trackerApp.Start()
 }

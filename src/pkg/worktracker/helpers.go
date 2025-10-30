@@ -1,6 +1,7 @@
 package worktracker
 
 import (
+	"fmt"
 	"path/filepath"
 	"time"
 )
@@ -12,4 +13,15 @@ func dateID(t time.Time) string {
 
 func dayFilePath(workDir, dateId string) string {
 	return filepath.Join(workDir, dateId+".jsonl")
+}
+
+func formatDuration(d time.Duration) string {
+	if d < 0 {
+		d = 0
+	}
+	sec := int(d.Seconds())
+	h := sec / 3600
+	m := (sec % 3600) / 60
+	s := sec % 60
+	return fmt.Sprintf("%02d:%02d:%02d", h, m, s)
 }
