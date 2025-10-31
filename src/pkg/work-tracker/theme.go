@@ -27,3 +27,8 @@ func (t scaledTheme) Size(n fyne.ThemeSizeName) float32 {
 	// If you want only text scaled, we can branch on n.
 	return t.base.Size(n) * t.factor
 }
+
+// when element is active
+func getActiveColor() color.NRGBA {
+	return color.NRGBA{R: 0, G: 125, B: 255, A: 255}
+}

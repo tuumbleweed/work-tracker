@@ -119,6 +119,11 @@ func (t *TrackerApp) updateInterface() {
 		t.Title.Refresh()
 		// update clock
 		t.Clock.Text = clockText
+		if t.IsRunning {
+			t.Clock.Color = getActiveColor()
+		} else {
+			t.Clock.Color = theme.Color(theme.ColorNameForeground) // revert to default theme color
+		}
 		t.Clock.Refresh()
 		// update activity
 		t.AverageActivityWidget.SetText(avgActivityText)
