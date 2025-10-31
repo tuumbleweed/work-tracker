@@ -42,7 +42,7 @@ func flushChunk(filePath string, start, end time.Time, ActiveDuringThisChunk tim
 		return e
 	}
 
-	logger.Log(logger.Detailed1, logger.GreenColor, "%s to '%s'", "Chunk flushed successfully", filePath)
+	logger.Log(logger.Detailed1, logger.GreenColor, "%s chunk to file: '%s'", "Flushed", filePath)
 	return nil
 }
 

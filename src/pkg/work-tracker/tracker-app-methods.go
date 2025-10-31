@@ -89,6 +89,7 @@ Update clock and activity labels.
 This function does not change any TrackerApp values. Only updates the interface.
 */
 func (t *TrackerApp) updateInterface() {
+	logger.Log(logger.Verbose, logger.BlueColor, "%s", "Updating interface")
 
 	// get the data
 	t.Mutex.Lock()
@@ -120,6 +121,7 @@ func (t *TrackerApp) updateInterface() {
 			t.Button.SetIcon(theme.MediaPlayIcon())
 		}
 	})
+	logger.Log(logger.Verbose1, logger.GreenColor, "%s", "Updated interface")
 }
 
 /*
@@ -128,11 +130,12 @@ Update TrackerApp underlying paramenters. Runs every tick.
 Do it here instead of doing everything in updateInterface.
 */
 func (t *TrackerApp) refreshState() {
-	now := time.Now()
-
+	
 	t.Mutex.Lock()
 	// no need to refresh state when not running
 	if t.IsRunning {
+		logger.Log(logger.Verbose, logger.BlueColor, "%s", "Refreshing state")
+		now := time.Now()
 		t.LastTickActiveDuration = 0
 		pollMs := t.TickInterval.Milliseconds()
 		idle := tryXprintidle() // ms since last input
@@ -148,12 +151,14 @@ func (t *TrackerApp) refreshState() {
 		t.ActiveToday += t.LastTickActiveDuration
 		// add last active duration to t.ActiveDuringThisChunk (it's emptied on each flush)
 		t.ActiveDuringThisChunk += t.LastTickActiveDuration
+		logger.Log(logger.Verbose1, logger.GreenColor, "%s", "Refreshed state")
 	}
 	t.Mutex.Unlock()
 }
 
 // Runs when we press on start/stop button
 func (t *TrackerApp) flipSwitch() {
+	logger.Log(logger.Verbose, logger.BlueColor, "%s", "Flipping switch")
 	t.Mutex.Lock()
 	if !t.IsRunning {
 		// starting
@@ -168,6 +173,7 @@ func (t *TrackerApp) flipSwitch() {
 		t.WorkedTodayBeforeStartingThisRun = t.WorkedToday
 	}
 	t.Mutex.Unlock()
+	logger.Log(logger.Verbose1, logger.GreenColor, "%s", "Flipped switch")
 }
 
 func (t *TrackerApp) flushChunkIfRunning() {
