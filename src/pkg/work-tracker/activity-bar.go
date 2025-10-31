@@ -140,17 +140,3 @@ func (r *activityBarRenderer) Refresh() {
 
 func (r *activityBarRenderer) Destroy()                     {}
 func (r *activityBarRenderer) Objects() []fyne.CanvasObject { return r.objects }
-
-// --- helpers ---
-
-func barColorFor(p float64) color.Color {
-	// Red → Yellow → Green thresholds (tweak if you like)
-	switch {
-	case p < 40:
-		return color.NRGBA{R: 220, G: 60, B: 60, A: 255} // red
-	case p < 70:
-		return color.NRGBA{R: 235, G: 190, B: 50, A: 255} // yellow
-	default:
-		return color.NRGBA{R: 60, G: 180, B: 90, A: 255} // green
-	}
-}
