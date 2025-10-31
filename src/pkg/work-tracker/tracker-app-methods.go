@@ -93,6 +93,8 @@ This function does not change any TrackerApp values. Only updates the interface.
 func (t *TrackerApp) updateInterface() {
 	logger.Log(logger.Verbose, logger.BlueColor, "%s", "Updating interface")
 
+	now := time.Now()
+
 	// get the data
 	t.Mutex.Lock()
 	isRunning := t.IsRunning
@@ -109,7 +111,12 @@ func (t *TrackerApp) updateInterface() {
 	avgActivityText := fmt.Sprintf("Average activity: %.1f%%", todayAverageActivityPrecentage)
 	currentActivityText := fmt.Sprintf("Current activity: %.1f%%", lastTickActivityPercentage)
 
+	titleText := now.Format("Monday, January 02, 15:04:05")
+
 	fyne.Do(func() {
+		// Update title
+		t.Title.Text = titleText
+		t.Title.Refresh()
 		// update clock
 		t.Clock.Text = clockText
 		t.Clock.Refresh()
