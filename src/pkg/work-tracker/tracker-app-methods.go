@@ -130,30 +130,40 @@ Update TrackerApp underlying paramenters. Runs every tick.
 Do it here instead of doing everything in updateInterface.
 */
 func (t *TrackerApp) refreshState() {
-	
-	t.Mutex.Lock()
-	// no need to refresh state when not running
-	if t.IsRunning {
-		logger.Log(logger.Verbose, logger.BlueColor, "%s", "Refreshing state")
-		now := time.Now()
-		t.LastTickActiveDuration = 0
-		pollMs := t.TickInterval.Milliseconds()
-		idle := tryXprintidle() // ms since last input
-		if pollMs > 0 && idle >= 0 {
-			idleInWindow := Min(idle, pollMs)
-			activeMs := pollMs - idleInWindow
-			t.LastTickActiveDuration = time.Duration(activeMs) * time.Millisecond
-		}
+	logger.Log(logger.Verbose, logger.BlueColor, "%s", "Refreshing state")
 
-		// worked before this run + this run
-		t.WorkedToday = t.WorkedTodayBeforeStartingThisRun + now.Sub(t.RunStart)
-		// add last active duration to use later
-		t.ActiveToday += t.LastTickActiveDuration
-		// add last active duration to t.ActiveDuringThisChunk (it's emptied on each flush)
-		t.ActiveDuringThisChunk += t.LastTickActiveDuration
-		logger.Log(logger.Verbose1, logger.GreenColor, "%s", "Refreshed state")
+	now := time.Now()
+
+	t.Mutex.Lock()
+	// no state updates if not running.
+	if !t.IsRunning {
+		logger.Log(logger.Verbose1, logger.CyanColor, "%s", "No need to refresh state")
+		t.LastTickStart = now
+		t.Mutex.Unlock()
+		return
 	}
+
+	idleMs := tryXprintidle() // milliseconds since last input (may be -1 on error)
+
+	// calculate active time for the last tick
+	t.LastTickActiveDuration = 0
+	lastTickDurationMs := time.Since(t.LastTickStart).Milliseconds()
+	if lastTickDurationMs > 0 && idleMs >= 0 {
+		idleInWindow := Min(idleMs, lastTickDurationMs)
+		activeMs := lastTickDurationMs - idleInWindow
+		t.LastTickActiveDuration = time.Duration(activeMs) * time.Millisecond
+	}
+
+	// worked before this run + this run
+	t.WorkedToday = t.WorkedTodayBeforeStartingThisRun + now.Sub(t.RunStart)
+	// add last active duration to use later
+	t.ActiveToday += t.LastTickActiveDuration
+	// add last active duration to t.ActiveDuringThisChunk (it's emptied on each flush)
+	t.ActiveDuringThisChunk += t.LastTickActiveDuration
+	t.LastTickStart = now
 	t.Mutex.Unlock()
+
+	logger.Log(logger.Verbose1, logger.GreenColor, "%s", "Refreshed state")
 }
 
 // Runs when we press on start/stop button

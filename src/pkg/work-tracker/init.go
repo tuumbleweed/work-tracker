@@ -56,6 +56,7 @@ func InitializeTrackerApp(appId, windowTitle, workDir string, tickInterval, flus
 	trackerApp.Ticker = time.NewTicker(trackerApp.TickInterval)
 	trackerApp.FlushTicker = time.NewTicker(trackerApp.FlushInterval)
 	trackerApp.done = make(chan struct{})
+	trackerApp.LastTickStart = time.Now()
 
 	logger.Log(
 		logger.Important1, logger.BoldGreenColor,

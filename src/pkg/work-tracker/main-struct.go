@@ -40,7 +40,8 @@ type TrackerApp struct {
 	Mutex sync.Mutex
 
 	// run info
-	IsRunning  bool
-	RunStart   time.Time // when last pressed "start" button
-	ChunkStart time.Time // when last time chunk was saved
+	IsRunning     bool
+	RunStart      time.Time // when last pressed "start" button
+	ChunkStart    time.Time // when last time chunk was saved
+	LastTickStart time.Time // when last tick has started
 }
