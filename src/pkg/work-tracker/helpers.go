@@ -2,10 +2,13 @@ package worktracker
 
 import (
 	"fmt"
+	"image/color"
 	"os/exec"
 	"path/filepath"
 	"time"
 
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"golang.org/x/exp/constraints"
 )
 
@@ -64,4 +67,10 @@ func Clamp[T constraints.Ordered](v, min, max T) T {
 		return max
 	}
 	return v
+}
+
+func vgap(wpx, hpx float32) fyne.CanvasObject {
+    r := canvas.NewRectangle(color.NRGBA{0,0,0,0}) // transparent
+    r.SetMinSize(fyne.NewSize(wpx, hpx))
+    return r
 }

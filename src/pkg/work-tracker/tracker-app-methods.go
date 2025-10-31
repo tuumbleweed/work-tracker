@@ -33,10 +33,13 @@ func (t *TrackerApp) Start() {
 func (t *TrackerApp) setContent() {
 	content := container.New(
 		layout.NewVBoxLayout(),
+		vgap(1, 10),
 		t.Title,
+		vgap(1, 10),
 		t.Clock,
 		t.AverageActivityWidget,
 		t.CurrentActivityWidget,
+		vgap(1, 10),
 		container.NewCenter(t.Button),
 	)
 	t.Window.SetContent(container.NewPadded(content))
