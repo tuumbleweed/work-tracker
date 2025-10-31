@@ -1,7 +1,6 @@
 package worktracker
 
 import (
-	"fmt"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -38,8 +37,8 @@ func (t *TrackerApp) setContent() {
 		vgap(1, 10),
 		t.Clock,
 		vgap(1, 5),
-		t.AverageActivityWidget,
-		t.CurrentActivityWidget,
+		t.AverageActivityBar,
+		t.CurrentActivityBar,
 		vgap(1, 10),
 		container.NewCenter(t.Button),
 	)
@@ -105,12 +104,10 @@ func (t *TrackerApp) updateInterface() {
 	t.Mutex.Unlock()
 
 	activeToday = Clamp(activeToday, 0, workedToday)
-	todayAverageActivityPrecentage := getActivityPercentage(activeToday, workedToday)
+	todayAverageActivityPercentage := getActivityPercentage(activeToday, workedToday)
 	lastTickActivityPercentage := getActivityPercentage(lastTickActiveDuration, t.TickInterval)
 
 	clockText := formatDuration(workedToday)
-	avgActivityText := fmt.Sprintf("Average activity: %.1f%%", todayAverageActivityPrecentage)
-	currentActivityText := fmt.Sprintf("Current activity: %.1f%%", lastTickActivityPercentage)
 
 	titleText := now.Format("Monday, January 02, 15:04:05")
 
@@ -126,9 +123,9 @@ func (t *TrackerApp) updateInterface() {
 			t.Clock.Color = theme.Color(theme.ColorNameForeground) // revert to default theme color
 		}
 		t.Clock.Refresh()
-		// update activity
-		t.AverageActivityWidget.SetText(avgActivityText)
-		t.CurrentActivityWidget.SetText(currentActivityText)
+		// update activity bars
+		t.AverageActivityBar.SetPercent(todayAverageActivityPercentage)
+		t.CurrentActivityBar.SetPercent(lastTickActivityPercentage)
 
 		// update button
 		if isRunning {

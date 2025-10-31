@@ -43,13 +43,9 @@ func initializeInterface(appId, windowTitle string) *TrackerApp {
 	t.Clock.TextStyle = fyne.TextStyle{Monospace: true, Bold: true}
 	t.Clock.TextSize  = theme.TextSize() * 3.2   // really big
 
-	// activity widgets
-	t.AverageActivityWidget = widget.NewLabel("Average activity")
-	t.AverageActivityWidget.Alignment = fyne.TextAlignCenter
-	t.AverageActivityWidget.Importance = widget.MediumImportance
-	t.CurrentActivityWidget = widget.NewLabel("Current activity")
-	t.CurrentActivityWidget.Alignment = fyne.TextAlignCenter
-	t.CurrentActivityWidget.Importance = widget.MediumImportance
+	// activity bars
+	t.AverageActivityBar = NewActivityBar("Average activity")
+	t.CurrentActivityBar = NewActivityBar("Current activity")
 
 	// start button
 	t.Button = widget.NewButtonWithIcon("Start", theme.MediaPlayIcon(), nil)
