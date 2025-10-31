@@ -30,15 +30,17 @@ type TrackerApp struct {
 	CurrentFilePath string
 
 	// time
-	WorkedTodayBeforeStartingThisRun time.Duration   // for how long user tracked time today
-	WorkedToday                      time.Duration   // for how long user tracked time today
+	WorkedTodayBeforeStartingThisRun time.Duration // for how long user tracked time today
+	WorkedToday                      time.Duration // for how long user tracked time today
 	ActiveToday                      time.Duration // how much out of that time user was active
-	LastTickActiveDuration           time.Duration   // how much out of that user was active
+	ActiveDuringThisChunk            time.Duration // how long user been active during this chunk
+	LastTickActiveDuration           time.Duration // how much out of that user was active
 
 	// mutex
 	Mutex sync.Mutex
 
 	// run info
-	IsRunning bool
-	RunStart  time.Time // when last pressed "start" button
+	IsRunning  bool
+	RunStart   time.Time // when last pressed "start" button
+	ChunkStart time.Time // when last time chunk was saved
 }

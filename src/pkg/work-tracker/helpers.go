@@ -49,7 +49,7 @@ func tryXprintidle() int64 {
 	return ms
 }
 
-func min64(a, b int64) int64 {
+func Min[T constraints.Ordered](a, b T) T {
 	if a < b {
 		return a
 	}

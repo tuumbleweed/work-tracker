@@ -52,16 +52,8 @@ func (t *TrackerApp) onClose() {
 	close(t.done)
 	t.Ticker.Stop()
 	t.FlushTicker.Stop()
-
-	// flush current run if any
-	t.Mutex.Lock()
-	isRunning := t.IsRunning
-	// runStart := t.RunStart
-	t.Mutex.Unlock()
-
-	if isRunning {
-		// write to file here
-	}
+	// flush current run if any (only works when t.IsRunning == true)
+	t.flushChunkIfRunning()
 
 	t.Window.Close()
 }
@@ -82,7 +74,7 @@ func (t *TrackerApp) flushLoop() {
 	for {
 		select {
 		case <-t.FlushTicker.C:
-			t.saveChunk()
+			t.flushChunkIfRunning()
 		case <-t.done:
 			return
 		}
@@ -143,7 +135,7 @@ func (t *TrackerApp) refreshState() {
 		pollMs := t.TickInterval.Milliseconds()
 		idle := tryXprintidle() // ms since last input
 		if pollMs > 0 && idle >= 0 {
-			idleInWindow := min64(idle, pollMs)
+			idleInWindow := Min(idle, pollMs)
 			activeMs := pollMs - idleInWindow
 			t.LastTickActiveDuration = time.Duration(activeMs) * time.Millisecond
 		}
@@ -152,6 +144,8 @@ func (t *TrackerApp) refreshState() {
 		t.WorkedToday = t.WorkedTodayBeforeStartingThisRun + now.Sub(t.RunStart)
 		// add last active duration to use later
 		t.ActiveToday += t.LastTickActiveDuration
+		// add last active duration to t.ActiveDuringThisChunk (it's emptied on each flush)
+		t.ActiveDuringThisChunk += t.LastTickActiveDuration
 	}
 	t.Mutex.Unlock()
 }
@@ -162,7 +156,9 @@ func (t *TrackerApp) flipSwitch() {
 	if !t.IsRunning {
 		// starting
 		t.IsRunning = true
-		t.RunStart = time.Now()
+		now := time.Now()
+		t.RunStart = now
+		t.ChunkStart = now
 	} else {
 		// stopping
 		t.IsRunning = false
@@ -172,6 +168,16 @@ func (t *TrackerApp) flipSwitch() {
 	t.Mutex.Unlock()
 }
 
-func (t *TrackerApp) saveChunk() {
-
+func (t *TrackerApp) flushChunkIfRunning() {
+	t.Mutex.Lock()
+	if t.IsRunning {
+		now := time.Now()
+		e := flushChunk(t.CurrentFilePath, t.ChunkStart, now, t.ActiveDuringThisChunk)
+		if e != nil {
+			e.QuitIf("error") // don't expect any errors here, so quit if found one
+		}
+		t.ActiveDuringThisChunk = 0
+		t.ChunkStart = now
+	}
+	t.Mutex.Unlock()
 }

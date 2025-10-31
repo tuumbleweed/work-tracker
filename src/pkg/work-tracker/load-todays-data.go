@@ -3,6 +3,7 @@ package worktracker
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"os"
 	"strings"
 	"time"
@@ -19,11 +20,6 @@ loadFileActivityAndDuration reads a per-day JSONL file and returns:
 
 It processes the file in one pass. Any malformed line (bad JSON)
 or a chunk where FinishedAt is not after StartedAt triggers an immediate error return.
-
-Logging:
-- Notice/Blue at start
-- Green on success
-- Purple on premature exits
 */
 func loadFileActivityAndDuration(filePath string) (totalDuration, totalActiveTime time.Duration, e *er.Error) {
 	logger.Log(logger.Notice, logger.BlueColor, "Reading %s and %s from '%s'", "activity", "duration", filePath)
@@ -70,7 +66,7 @@ func loadFileActivityAndDuration(filePath string) (totalDuration, totalActiveTim
 		}
 
 		if chunk.StartedAt.IsZero() {
-			e = er.NewErrorECML(nil, "invalid chunk: StartedAt is zero", "context",
+			e = er.NewErrorECML(errors.New("invalid chunk"), "invalid chunk: StartedAt is zero", "context",
 				map[string]any{
 					"line_number": lineNumber,
 				},
@@ -79,7 +75,7 @@ func loadFileActivityAndDuration(filePath string) (totalDuration, totalActiveTim
 			return totalDuration, totalActiveTime, e
 		}
 		if chunk.FinishedAt.IsZero() {
-			e = er.NewErrorECML(nil, "invalid chunk: FinishedAt is zero", "context",
+			e = er.NewErrorECML(errors.New("invalid chunk"), "invalid chunk: FinishedAt is zero", "context",
 				map[string]any{
 					"line_number": lineNumber,
 				},
@@ -88,7 +84,7 @@ func loadFileActivityAndDuration(filePath string) (totalDuration, totalActiveTim
 			return totalDuration, totalActiveTime, e
 		}
 		if !chunk.FinishedAt.After(chunk.StartedAt) {
-			e = er.NewErrorECML(nil, "invalid time interval: FinishedAt is not after StartedAt", "context",
+			e = er.NewErrorECML(errors.New("invalid time interval"), "invalid time interval: FinishedAt is not after StartedAt", "context",
 				map[string]any{
 					"line_number":      lineNumber,
 					"chunk.StartedAt":  chunk.StartedAt,
@@ -102,7 +98,7 @@ func loadFileActivityAndDuration(filePath string) (totalDuration, totalActiveTim
 		chunkInterval := chunk.FinishedAt.Sub(chunk.StartedAt)
 
 		if chunk.ActiveTime < 0 || chunk.ActiveTime > chunkInterval {
-			e = er.NewErrorECML(nil, "invalid active time: must be within [0, duration]", "context",
+			e = er.NewErrorECML(errors.New("invalid active time"), "invalid active time: must be within [0, duration]", "context",
 				map[string]any{
 					"line_number": lineNumber,
 					"duration":    chunkInterval.String(),
