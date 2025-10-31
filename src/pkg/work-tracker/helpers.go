@@ -35,6 +35,7 @@ func getActivityPercentage[T int64 | time.Duration](active, total T) float64 {
 	}
 	return (float64(active) / float64(total)) * 100
 }
+
 // tryXprintidle returns idle ms if xprintidle works, else -1
 func tryXprintidle() int64 {
 	out, err := exec.Command("xprintidle").Output()

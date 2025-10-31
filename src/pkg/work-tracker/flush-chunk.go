@@ -22,6 +22,10 @@ func flushChunk(filePath string, start, end time.Time, ActiveDuringThisChunk tim
 		return e
 	}
 
+	// remove monotonic component
+	start = start.Round(0)
+	end = end.Round(0)
+
 	duration := end.Sub(start)
 	// clamp it between 0 and 100%
 	ActiveDuringThisChunk = Clamp(ActiveDuringThisChunk, 0, duration)
