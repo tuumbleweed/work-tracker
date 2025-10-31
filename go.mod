@@ -4,6 +4,7 @@ go 1.24.4
 
 require (
 	fyne.io/fyne/v2 v2.7.0
+	golang.org/x/exp v0.0.0-20251023183803-a4bb9ffd2546
 	gorm.io/gorm v1.31.0
 )
 

@@ -44,17 +44,7 @@ func (t *TrackerApp) Start() {
 }
 
 func (t *TrackerApp) onButtonTapped() {
-	now := time.Now()
-	t.Mutex.Lock()
-	if !t.IsRunning {
-		// starting
-		t.IsRunning = true
-		t.RunStart = now
-	} else {
-		// stopping
-		t.IsRunning = false
-	}
-	t.Mutex.Unlock()
+	t.flipSwitch()
 	t.updateInterface()
 }
 
@@ -80,6 +70,7 @@ func (t *TrackerApp) tickLoop() {
 	for {
 		select {
 		case <-t.Ticker.C:
+			t.refreshState()
 			t.updateInterface()
 		case <-t.done:
 			return
@@ -104,20 +95,18 @@ Update clock and activity labels.
 This function does not change any TrackerApp values. Only updates the interface.
 */
 func (t *TrackerApp) updateInterface() {
-	// // now := time.Now()
 
 	// get the data
 	t.Mutex.Lock()
 	isRunning := t.IsRunning
-	// runStart := t.RunStart
 	workedToday := t.WorkedToday
 	activeToday := t.ActiveToday
 	lastTickActiveDuration := t.LastTickActiveDuration
 	t.Mutex.Unlock()
 
+	activeToday = Clamp(activeToday, 0, workedToday)
 	todayAverageActivityPrecentage := getActivityPercentage(activeToday, workedToday)
 	lastTickActivityPercentage := getActivityPercentage(lastTickActiveDuration, t.TickInterval)
-	// fmt.Printf("Activity: %.1f%%\n", lastTickActivityPercentage) // Output: 75.4%
 
 	clockText := formatDuration(workedToday)
 	activityText := fmt.Sprintf("Average activity: %.1f%%, Current activity: %.1f%%", todayAverageActivityPrecentage, lastTickActivityPercentage)
@@ -137,6 +126,50 @@ func (t *TrackerApp) updateInterface() {
 			t.Button.SetIcon(theme.MediaPlayIcon())
 		}
 	})
+}
+
+/*
+Update TrackerApp underlying paramenters. Runs every tick.
+
+Do it here instead of doing everything in updateInterface.
+*/
+func (t *TrackerApp) refreshState() {
+	now := time.Now()
+
+	t.Mutex.Lock()
+	// no need to refresh state when not running
+	if t.IsRunning {
+		t.LastTickActiveDuration = 0
+		pollMs := t.TickInterval.Milliseconds()
+		idle := tryXprintidle() // ms since last input
+		if pollMs > 0 && idle >= 0 {
+			idleInWindow := min64(idle, pollMs)
+			activeMs := pollMs - idleInWindow
+			t.LastTickActiveDuration = time.Duration(activeMs) * time.Millisecond
+		}
+
+		// worked before this run + this run
+		t.WorkedToday = t.WorkedTodayBeforeStartingThisRun + now.Sub(t.RunStart)
+		// add last active duration to use later
+		t.ActiveToday += t.LastTickActiveDuration
+	}
+	t.Mutex.Unlock()
+}
+
+// Runs when we press on start/stop button
+func (t *TrackerApp) flipSwitch() {
+	t.Mutex.Lock()
+	if !t.IsRunning {
+		// starting
+		t.IsRunning = true
+		t.RunStart = time.Now()
+	} else {
+		// stopping
+		t.IsRunning = false
+		// set new t.WorkedTodayBeforeStartingThisRun
+		t.WorkedTodayBeforeStartingThisRun = t.WorkedToday
+	}
+	t.Mutex.Unlock()
 }
 
 func (t *TrackerApp) saveChunk() {

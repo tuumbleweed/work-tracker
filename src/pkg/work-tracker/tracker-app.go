@@ -48,6 +48,7 @@ func InitializeTrackerApp(appId, windowTitle, workDir string, tickInterval, flus
 	if e != nil {
 		return trackerApp, e
 	}
+	trackerApp.WorkedTodayBeforeStartingThisRun = trackerApp.WorkedToday
 
 	// initialize tickers
 	trackerApp.TickInterval = tickInterval

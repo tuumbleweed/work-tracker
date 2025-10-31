@@ -18,11 +18,11 @@ type TrackerApp struct {
 	Button *widget.Button
 
 	// tickers
-	Ticker      *time.Ticker // UI and activity clock
-	FlushTicker *time.Ticker // file chunk save clock
-	TickInterval time.Duration // for Ticker
+	Ticker        *time.Ticker  // UI and activity clock
+	FlushTicker   *time.Ticker  // file chunk save clock
+	TickInterval  time.Duration // for Ticker
 	FlushInterval time.Duration // for FlushTicker
-	done        chan struct{}
+	done          chan struct{}
 
 	// dirs
 	Workdir         string
@@ -30,9 +30,10 @@ type TrackerApp struct {
 	CurrentFilePath string
 
 	// time
-	WorkedToday            time.Duration // for how long user tracked time today
-	ActiveToday            time.Duration // how much out of that time user was active
-	LastTickActiveDuration time.Duration // how much out of that user was active
+	WorkedTodayBeforeStartingThisRun time.Duration   // for how long user tracked time today
+	WorkedToday                      time.Duration   // for how long user tracked time today
+	ActiveToday                      time.Duration // how much out of that time user was active
+	LastTickActiveDuration           time.Duration   // how much out of that user was active
 
 	// mutex
 	Mutex sync.Mutex

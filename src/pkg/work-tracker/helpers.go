@@ -2,8 +2,11 @@ package worktracker
 
 import (
 	"fmt"
+	"os/exec"
 	"path/filepath"
 	"time"
+
+	"golang.org/x/exp/constraints"
 )
 
 // returns "DD-MM-YYYY" for t
@@ -26,6 +29,40 @@ func formatDuration(d time.Duration) string {
 	return fmt.Sprintf("%02d:%02d:%02d", h, m, s)
 }
 
-func getActivityPercentage(activeDuration, workedDuration time.Duration) float64 {
-	return (float64(activeDuration) / float64(workedDuration)) * 100
+func getActivityPercentage[T int64 | time.Duration](active, total T) float64 {
+	if total == 0 {
+		return 0
+	}
+	return (float64(active) / float64(total)) * 100
+}
+// tryXprintidle returns idle ms if xprintidle works, else -1
+func tryXprintidle() int64 {
+	out, err := exec.Command("xprintidle").Output()
+	if err != nil {
+		return -1
+	}
+	var ms int64
+	_, err = fmt.Sscanf(string(out), "%d", &ms)
+	if err != nil {
+		return -1
+	}
+	return ms
+}
+
+func min64(a, b int64) int64 {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+// Clamp returns v clamped between min and max (inclusive).
+func Clamp[T constraints.Ordered](v, min, max T) T {
+	if v < min {
+		return min
+	}
+	if v > max {
+		return max
+	}
+	return v
 }
