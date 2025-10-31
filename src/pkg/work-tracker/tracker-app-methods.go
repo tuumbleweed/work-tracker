@@ -161,9 +161,13 @@ func (t *TrackerApp) refreshState() {
 		return
 	}
 
-	idleMs := tryXprintidle() // milliseconds since last input (may be -1 on error)
-
+	// the way it works right now is that if we input anything at the very end of the
+	// tick then the whole tick will get near 100% activity.
+	// that's why we need to keep tick size small right now (500ms will do).
+	// UI and activity share same ticker at the moment.
+	// later we can implement a separate tick that would sample activity in shorter periods
 	// calculate active time for the last tick
+	idleMs := tryXprintidle() // milliseconds since last input (may be -1 on error)
 	t.LastTickActiveDuration = 0
 	lastTickDurationMs := time.Since(t.LastTickStart).Milliseconds()
 	if lastTickDurationMs > 0 && idleMs >= 0 {
