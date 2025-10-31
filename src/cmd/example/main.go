@@ -5,9 +5,9 @@ package main
 import (
 	"flag"
 
-	"my-project/src/pkg/config"
-	"my-project/src/pkg/logger"
-	"my-project/src/pkg/util"
+	"work-tracker/src/pkg/config"
+	"work-tracker/src/pkg/logger"
+	"work-tracker/src/pkg/util"
 )
 
 func main() {

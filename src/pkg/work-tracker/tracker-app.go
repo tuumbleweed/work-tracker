@@ -8,8 +8,8 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
-	er "my-project/src/pkg/error"
-	"my-project/src/pkg/logger"
+	er "work-tracker/src/pkg/error"
+	"work-tracker/src/pkg/logger"
 )
 
 func InitializeTrackerApp(appId, windowTitle, workDir string, tickInterval, flushInterval time.Duration) (trackerApp *TrackerApp, e *er.Error) {

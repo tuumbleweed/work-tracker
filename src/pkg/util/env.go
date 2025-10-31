@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"my-project/src/pkg/logger"
-	er "my-project/src/pkg/error"
+	er "work-tracker/src/pkg/error"
+	"work-tracker/src/pkg/logger"
 )
 
 // Check if all required environment variables are present. If not all present - print warinig and quit.

@@ -6,8 +6,9 @@ import (
 	"os"
 	"runtime/debug"
 
-	"my-project/src/pkg/logger"
+	"work-tracker/src/pkg/logger"
 )
+
 // error (red), warning (yellow) or skip (purple)
 type ErrorType string
 

@@ -6,10 +6,10 @@ import (
 	"flag"
 	"time"
 
-	"my-project/src/pkg/config"
-	"my-project/src/pkg/logger"
-	"my-project/src/pkg/util"
-	"my-project/src/pkg/work-tracker"
+	"work-tracker/src/pkg/config"
+	"work-tracker/src/pkg/logger"
+	"work-tracker/src/pkg/util"
+	worktracker "work-tracker/src/pkg/work-tracker"
 )
 
 func main() {

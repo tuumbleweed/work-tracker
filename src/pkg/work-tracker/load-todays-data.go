@@ -1,14 +1,14 @@
 package worktracker
 
 import (
-	"time"
 	"bufio"
 	"encoding/json"
 	"os"
 	"strings"
+	"time"
 
-	er "my-project/src/pkg/error"
-	logger "my-project/src/pkg/logger"
+	er "work-tracker/src/pkg/error"
+	logger "work-tracker/src/pkg/logger"
 )
 
 /*
@@ -90,8 +90,8 @@ func loadFileActivityAndDuration(filePath string) (totalDuration, totalActiveTim
 		if !chunk.FinishedAt.After(chunk.StartedAt) {
 			e = er.NewErrorECML(nil, "invalid time interval: FinishedAt is not after StartedAt", "context",
 				map[string]any{
-					"line_number":     lineNumber,
-					"chunk.StartedAt": chunk.StartedAt,
+					"line_number":      lineNumber,
+					"chunk.StartedAt":  chunk.StartedAt,
 					"chunk.FinishedAt": chunk.FinishedAt,
 				},
 			)

@@ -7,8 +7,8 @@ import (
 	"runtime"
 	"strings"
 
-	er "my-project/src/pkg/error"
-	"my-project/src/pkg/logger"
+	er "work-tracker/src/pkg/error"
+	"work-tracker/src/pkg/logger"
 )
 
 // since we call this only when initializing config at the start of the program

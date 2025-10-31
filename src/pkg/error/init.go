@@ -2,7 +2,7 @@
 // allows us to wrap NewError calls in one line
 package er
 
-import "my-project/src/pkg/logger"
+import "work-tracker/src/pkg/logger"
 
 /*
 If err is nil - do nothing.

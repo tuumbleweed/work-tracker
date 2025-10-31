@@ -10,7 +10,7 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
-	"my-project/src/pkg/logger"
+	"work-tracker/src/pkg/logger"
 )
 
 func (t *TrackerApp) Start() {
@@ -57,7 +57,6 @@ func (t *TrackerApp) onButtonTapped() {
 	t.Mutex.Unlock()
 	t.updateInterface()
 }
-
 
 func (t *TrackerApp) onClose() {
 	close(t.done)

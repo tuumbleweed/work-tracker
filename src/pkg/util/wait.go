@@ -6,7 +6,7 @@ import (
 	"math/rand"
 	"time"
 
-	"my-project/src/pkg/logger"
+	"work-tracker/src/pkg/logger"
 )
 
 // Wait for timeout amount of time

@@ -11,7 +11,7 @@ import (
 	"os"
 	"time"
 
-	"my-project/src/pkg/logger"
+	"work-tracker/src/pkg/logger"
 )
 
 func main() {

@@ -3,8 +3,8 @@ package util
 import (
 	"os"
 
-	er "my-project/src/pkg/error"
-	"my-project/src/pkg/logger"
+	er "work-tracker/src/pkg/error"
+	"work-tracker/src/pkg/logger"
 )
 
 func CreateDirIfDoesntExist(path string) (e *er.Error) {

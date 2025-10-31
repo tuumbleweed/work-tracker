@@ -5,10 +5,10 @@ import (
 	"flag"
 	"os"
 
-	"my-project/src/pkg/config"
-	er "my-project/src/pkg/error"
-	"my-project/src/pkg/logger"
-	"my-project/src/pkg/util"
+	"work-tracker/src/pkg/config"
+	er "work-tracker/src/pkg/error"
+	"work-tracker/src/pkg/logger"
+	"work-tracker/src/pkg/util"
 )
 
 func example(subprogram string, flags []string) {

@@ -6,9 +6,9 @@ import (
 	"os"
 	"strings"
 
-	er "my-project/src/pkg/error"
-	"my-project/src/pkg/logger"
-	"my-project/src/pkg/util"
+	er "work-tracker/src/pkg/error"
+	"work-tracker/src/pkg/logger"
+	"work-tracker/src/pkg/util"
 )
 
 type Config struct {
@@ -28,7 +28,7 @@ func GetDefaultConfig() Config {
 // this function will quit when encountering error
 // make sure to run common.LoadConfig first here since it's the earliest point we overriding log level from
 func InitializeConfig(configPath string, logLevelOverride logger.LogLevel, logDirOverride string) {
-	callerProgramName := strings.TrimPrefix(util.GetCallerProgramNamePanicWrapper(4), "my-project/") + os.Getenv("SERVICE_NAME_SUFFIX")
+	callerProgramName := strings.TrimPrefix(util.GetCallerProgramNamePanicWrapper(4), "work-tracker/") + os.Getenv("SERVICE_NAME_SUFFIX")
 	logger.Log(logger.Important, logger.BoldBlueColor, "%s, config path: '%s', caller: '%s'", "Initializing", configPath, callerProgramName)
 	util.SetEnvVar("SERVICE_NAME", callerProgramName)
 	if configPath == "" {
