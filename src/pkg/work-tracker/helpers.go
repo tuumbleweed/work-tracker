@@ -74,9 +74,9 @@ func Clamp[T constraints.Ordered](v, min, max T) T {
 }
 
 func vgap(wpx, hpx float32) fyne.CanvasObject {
-    r := canvas.NewRectangle(color.NRGBA{0,0,0,0}) // transparent
-    r.SetMinSize(fyne.NewSize(wpx, hpx))
-    return r
+	r := canvas.NewRectangle(color.NRGBA{0, 0, 0, 0}) // transparent
+	r.SetMinSize(fyne.NewSize(wpx, hpx))
+	return r
 }
 
 func clamp01(x float64) float64 {
@@ -102,27 +102,24 @@ func lerpColor(c1, c2 color.NRGBA, t float64) color.NRGBA {
 
 // 0–50%: red→yellow, 50–75%: yellow→green, 75–100%: blueBase→bluePeak (no teal)
 func barColorFor(p float64) color.Color {
-	red := color.NRGBA{R: 220, G: 60,  B: 60,  A: 255}
-	yel := color.NRGBA{R: 235, G: 190, B: 50,  A: 255}
-	gre := color.NRGBA{R: 60,  G: 180, B: 90,  A: 255}
-
-	// Choose two *blue* endpoints (same hue family, different brightness/sat)
-	blueBase := color.NRGBA{R: 77,  G: 163, B: 255, A: 255} // what you see at 75%
-	bluePeak := color.NRGBA{R: 40,  G: 120, B: 255, A: 255} // deeper/richer toward 100%
+	red := color.NRGBA{R: 220, G: 60, B: 60, A: 255} // 0%
+	yellow := color.NRGBA{R: 235, G: 190, B: 50, A: 255} // 50%
+	green := color.NRGBA{R: 60, G: 180, B: 90, A: 255} // 75%
+	// green peak at 100% (same hue family, different brightness/sat)
+	greenPeak := color.NRGBA{R: 20, G: 180, B: 45, A: 255} // deeper/richer toward 100%
 
 	t := clamp01(p / 100.0)
 
 	switch {
 	case t <= 0.5:
 		// 0..50%: red -> yellow
-		return lerpColor(red, yel, t*2.0)
+		return lerpColor(red, yellow, t*2.0)
 	case t <= 0.75:
 		// 50..75%: yellow -> green
-		return lerpColor(yel, gre, (t-0.5)*4.0)
+		return lerpColor(yellow, green, (t-0.5)*4.0)
 	default:
 		// 75..100%: start at clearly blue immediately, then deepen the blue
 		u := (t - 0.75) * 4.0 // map [0.75,1] → [0,1]
-		return lerpColor(blueBase, bluePeak, u)
+		return lerpColor(green, greenPeak, u)
 	}
 }
-
