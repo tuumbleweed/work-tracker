@@ -198,9 +198,10 @@ func (t *TrackerApp) flipSwitch() {
 		now := time.Now()
 		t.RunStart = now
 		t.ChunkStart = now
-	} else {
+		} else {
 		// stopping
 		t.IsRunning = false
+		t.LastTickActiveDuration = 0 // empty this to show 0% when idle
 		// set new t.WorkedTodayBeforeStartingThisRun
 		t.WorkedTodayBeforeStartingThisRun = t.WorkedToday
 	}
