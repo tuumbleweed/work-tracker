@@ -44,6 +44,7 @@ func (t *TrackerApp) Start() {
 }
 
 func (t *TrackerApp) onButtonTapped() {
+	t.flushChunkIfRunning()
 	t.flipSwitch()
 	t.updateInterface()
 }
