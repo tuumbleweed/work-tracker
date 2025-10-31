@@ -106,7 +106,8 @@ func (t *TrackerApp) updateInterface() {
 
 	fyne.Do(func() {
 		// update clock
-		t.Clock.SetText(clockText)
+		t.Clock.Text = clockText
+		t.Clock.Refresh()
 		// update activity
 		t.Status.SetText(activityText)
 

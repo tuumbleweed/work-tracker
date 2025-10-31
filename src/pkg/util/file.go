@@ -10,4 +10,3 @@ func FileExists(filename string) bool {
 	}
 	return err == nil
 }
-

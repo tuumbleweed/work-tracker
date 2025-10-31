@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -13,8 +14,8 @@ type TrackerApp struct {
 	Window fyne.Window
 
 	// UI elements
-	Title  *widget.Label
-	Clock  *widget.Label
+	Title  *canvas.Text
+	Clock  *canvas.Text
 	Status *widget.Label
 	Button *widget.Button
 

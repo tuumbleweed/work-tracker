@@ -3,6 +3,7 @@ package worktracker
 import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
@@ -32,22 +33,21 @@ func initializeInterface(appId, windowTitle string) *TrackerApp {
 	// t.Window.Canvas().SetScale(1.35)           // <— makes ALL labels & widgets bigger (try 1.25–1.5)
 
 	// title widget
-	t.Title = widget.NewLabel("Today")
+	t.Title = canvas.NewText("Today", theme.Color(theme.ColorNameForeground))
 	t.Title.Alignment = fyne.TextAlignCenter
 	t.Title.TextStyle = fyne.TextStyle{Bold: true}
-	t.Title.Importance = widget.HighImportance
+	t.Title.TextSize  = theme.TextSize() * 2.0   // 2x normal
 
 	// clock widget
-	t.Clock = widget.NewLabel("00:00:00")
+	t.Clock = canvas.NewText("00:00:00", theme.Color(theme.ColorNameForeground))
 	t.Clock.Alignment = fyne.TextAlignCenter
 	t.Clock.TextStyle = fyne.TextStyle{Monospace: true, Bold: true}
-	t.Clock.Wrapping = fyne.TextWrapOff
-	t.Clock.Importance = widget.HighImportance
+	t.Clock.TextSize  = theme.TextSize() * 3.2   // really big
 
 	// status widget
-	t.Status = widget.NewLabel("stopped")
+	t.Status = widget.NewLabel("activity")
 	t.Status.Alignment = fyne.TextAlignCenter
-	t.Clock.Importance = widget.MediumImportance
+	t.Status.Importance = widget.MediumImportance
 
 	// start button
 	t.Button = widget.NewButtonWithIcon("Start", theme.MediaPlayIcon(), nil)
