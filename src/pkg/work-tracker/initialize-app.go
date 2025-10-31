@@ -3,11 +3,6 @@ package worktracker
 import (
 	"time"
 
-	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/app"
-	"fyne.io/fyne/v2/theme"
-	"fyne.io/fyne/v2/widget"
-
 	er "work-tracker/src/pkg/error"
 	"work-tracker/src/pkg/logger"
 )
@@ -19,24 +14,7 @@ func InitializeTrackerApp(appId, windowTitle, workDir string, tickInterval, flus
 		"Initializing", appId, windowTitle, workDir, tickInterval, flushInterval,
 	)
 
-	trackerApp = &TrackerApp{}
-	trackerApp.App = app.NewWithID(appId)
-	trackerApp.Window = trackerApp.App.NewWindow(windowTitle)
-	trackerApp.Window.Resize(fyne.NewSize(420, 220))
-
-	// clock widget
-	trackerApp.Clock = widget.NewLabel("00:00:00")
-	trackerApp.Clock.Alignment = fyne.TextAlignCenter
-	trackerApp.Clock.TextStyle = fyne.TextStyle{Monospace: true, Bold: true}
-	trackerApp.Clock.Wrapping = fyne.TextWrapOff
-	trackerApp.Clock.Importance = widget.MediumImportance
-
-	// status widget
-	trackerApp.Status = widget.NewLabel("stopped")
-	trackerApp.Status.Alignment = fyne.TextAlignCenter
-
-	// start button
-	trackerApp.Button = widget.NewButtonWithIcon("Start", theme.MediaPlayIcon(), nil)
+	trackerApp = initializeInterface(appId, windowTitle)
 
 	// determine current file path
 	trackerApp.Workdir = workDir

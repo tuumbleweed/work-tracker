@@ -8,7 +8,6 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
-	"fyne.io/fyne/v2/widget"
 
 	"work-tracker/src/pkg/logger"
 )
@@ -20,19 +19,7 @@ func (t *TrackerApp) Start() {
 	t.Button.OnTapped = t.onButtonTapped
 	t.Window.SetCloseIntercept(t.onClose)
 
-	// build window elements
-	title := widget.NewLabel("Today")
-	title.Alignment = fyne.TextAlignCenter
-	title.TextStyle = fyne.TextStyle{Bold: true}
-
-	content := container.New(
-		layout.NewVBoxLayout(),
-		title,
-		t.Clock,
-		t.Status,
-		container.NewCenter(t.Button),
-	)
-	t.Window.SetContent(container.NewPadded(content))
+	t.setContent()
 
 	go t.tickLoop()
 	go t.flushLoop()
@@ -41,6 +28,17 @@ func (t *TrackerApp) Start() {
 	t.Window.ShowAndRun()
 
 	logger.Log(logger.Notice, logger.BoldGreenColor, "%s", "Closing work tracker app")
+}
+
+func (t *TrackerApp) setContent() {
+	content := container.New(
+		layout.NewVBoxLayout(),
+		t.Title,
+		t.Clock,
+		t.Status,
+		container.NewCenter(t.Button),
+	)
+	t.Window.SetContent(container.NewPadded(content))
 }
 
 func (t *TrackerApp) onButtonTapped() {

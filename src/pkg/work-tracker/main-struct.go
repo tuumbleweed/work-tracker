@@ -13,6 +13,7 @@ type TrackerApp struct {
 	Window fyne.Window
 
 	// UI elements
+	Title  *widget.Label
 	Clock  *widget.Label
 	Status *widget.Label
 	Button *widget.Button
