@@ -30,9 +30,7 @@ func formatDuration(d time.Duration) string {
 }
 
 func getActivityPercentage[T int64 | time.Duration](active, total T) float64 {
-	if total == 0 {
-		return 0
-	}
+	active = Clamp(active, 0, total)
 	return (float64(active) / float64(total)) * 100
 }
 
