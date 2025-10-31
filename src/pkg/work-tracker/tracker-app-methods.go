@@ -37,6 +37,7 @@ func (t *TrackerApp) setContent() {
 		t.Title,
 		vgap(1, 10),
 		t.Clock,
+		vgap(1, 5),
 		t.AverageActivityWidget,
 		t.CurrentActivityWidget,
 		vgap(1, 10),
