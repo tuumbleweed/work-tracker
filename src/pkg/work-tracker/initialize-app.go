@@ -14,7 +14,10 @@ func InitializeTrackerApp(appId, windowTitle, workDir string, tickInterval, flus
 		"Initializing", appId, windowTitle, workDir, tickInterval, flushInterval,
 	)
 
-	trackerApp = initializeInterface(appId, windowTitle)
+	trackerApp ,e = initializeInterface(appId, windowTitle)
+	if e != nil {
+		return trackerApp, e
+	}
 
 	// determine current file path
 	trackerApp.Workdir = workDir

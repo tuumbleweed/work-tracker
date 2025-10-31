@@ -19,6 +19,7 @@ type TrackerApp struct {
 	AverageActivityBar *ActivityBar
 	CurrentActivityBar *ActivityBar
 	Button             *widget.Button
+	TasksContainer     *fyne.Container
 
 	// tickers
 	Ticker        *time.Ticker  // UI and activity clock

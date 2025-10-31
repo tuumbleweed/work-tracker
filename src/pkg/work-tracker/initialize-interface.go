@@ -7,17 +7,18 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
+	er "work-tracker/src/pkg/error"
 	"work-tracker/src/pkg/logger"
 )
 
 // initializeInterface sets up the Fyne app/window and constructs the UI widgets.
 // It does NOT wire handlers, lay out content, or start tickers.
 // Call t.initUI() later to compose these widgets into the window.
-func initializeInterface(appId, windowTitle string) *TrackerApp {
+func initializeInterface(appId, windowTitle string) (t *TrackerApp, e *er.Error) {
 	logger.Log(logger.Notice, logger.BoldBlueColor, "%s for '%s'", "Initializing interface", windowTitle)
 
 	// set up the app
-	t := &TrackerApp{}
+	t = &TrackerApp{}
 	t.App = app.NewWithID(appId)
 	// Apply a slightly larger theme, light theme
 	currentTheme := t.App.Settings().Theme()
@@ -28,7 +29,7 @@ func initializeInterface(appId, windowTitle string) *TrackerApp {
 
 	// Start large + fullscreen
 	t.Window = t.App.NewWindow(windowTitle)
-	t.Window.Resize(fyne.NewSize(1280, 720))   // initial size (before FS)
+	t.Window.Resize(fyne.NewSize(1920, 1080))   // initial size (before FS)
 	// t.Window.SetFullScreen(true)               // launch fullscreen
 
 	// title widget
@@ -50,6 +51,13 @@ func initializeInterface(appId, windowTitle string) *TrackerApp {
 	// start button
 	t.Button = widget.NewButtonWithIcon("Start", theme.MediaPlayIcon(), nil)
 
+	// after you computed tickers & LastTickStart...
+	tasks, e := loadTasks("./tmp/tasks.json")
+	if e != nil {
+		return t, e
+	}
+	t.TasksContainer = t.makeTasksUI(tasks)
+
 	logger.Log(logger.Notice1, logger.BoldGreenColor, "%s for '%s'", "Initialized interface", windowTitle)
-	return t
+	return t, nil
 }

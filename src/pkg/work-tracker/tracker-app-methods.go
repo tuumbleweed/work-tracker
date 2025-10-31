@@ -41,6 +41,8 @@ func (t *TrackerApp) setContent() {
 		t.CurrentActivityBar,
 		vgap(1, 10),
 		container.NewCenter(t.Button),
+		vgap(1, 10),
+		t.TasksContainer,
 	)
 	t.Window.SetContent(container.NewPadded(content))
 }
