@@ -1,8 +1,9 @@
 package worktracker
 
 import (
+	"fmt"
 	"time"
-	
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
@@ -49,23 +50,12 @@ func (t *TrackerApp) onButtonTapped() {
 		// starting
 		t.IsRunning = true
 		t.RunStart = now
-		t.Mutex.Unlock()
-
-		// update button
-		t.Button.SetText("Stop")
-		t.Button.SetIcon(theme.MediaPauseIcon())
-		t.updateInterface()
-		return
 	} else {
 		// stopping
 		t.IsRunning = false
-		t.Mutex.Unlock()
-
-		// update button
-		t.Button.SetText("Start")
-		t.Button.SetIcon(theme.MediaPlayIcon())
-		t.updateInterface()
 	}
+	t.Mutex.Unlock()
+	t.updateInterface()
 }
 
 
@@ -109,20 +99,45 @@ func (t *TrackerApp) flushLoop() {
 	}
 }
 
-// update clock and activity labels
+/*
+Update clock and activity labels.
+
+This function does not change any TrackerApp values. Only updates the interface.
+*/
 func (t *TrackerApp) updateInterface() {
-	// now := time.Now()
+	// // now := time.Now()
 
-	// // get the data
-	// t.Mutex.Lock()
-	// isRunning := t.IsRunning
+	// get the data
+	t.Mutex.Lock()
+	isRunning := t.IsRunning
 	// runStart := t.RunStart
-	// workedToday := t.WorkedToday
-	// activeToday := t.ActiveToday
-	// lastTickActiveDuration := t.LastTickActiveDuration
-	// t.Mutex.Unlock()
+	workedToday := t.WorkedToday
+	activeToday := t.ActiveToday
+	lastTickActiveDuration := t.LastTickActiveDuration
+	t.Mutex.Unlock()
 
+	todayAverageActivityPrecentage := getActivityPercentage(activeToday, workedToday)
+	lastTickActivityPercentage := getActivityPercentage(lastTickActiveDuration, t.TickInterval)
+	// fmt.Printf("Activity: %.1f%%\n", lastTickActivityPercentage) // Output: 75.4%
 
+	clockText := formatDuration(workedToday)
+	activityText := fmt.Sprintf("Average activity: %.1f%%, Current activity: %.1f%%", todayAverageActivityPrecentage, lastTickActivityPercentage)
+
+	fyne.Do(func() {
+		// update clock
+		t.Clock.SetText(clockText)
+		// update activity
+		t.Status.SetText(activityText)
+
+		// update button
+		if isRunning {
+			t.Button.SetText("Stop")
+			t.Button.SetIcon(theme.MediaPauseIcon())
+		} else {
+			t.Button.SetText("Start")
+			t.Button.SetIcon(theme.MediaPlayIcon())
+		}
+	})
 }
 
 func (t *TrackerApp) saveChunk() {

@@ -25,3 +25,7 @@ func formatDuration(d time.Duration) string {
 	s := sec % 60
 	return fmt.Sprintf("%02d:%02d:%02d", h, m, s)
 }
+
+func getActivityPercentage(activeDuration, workedDuration time.Duration) float64 {
+	return (float64(activeDuration) / float64(workedDuration)) * 100
+}
