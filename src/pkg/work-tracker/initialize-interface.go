@@ -30,7 +30,6 @@ func initializeInterface(appId, windowTitle string) *TrackerApp {
 	t.Window = t.App.NewWindow(windowTitle)
 	t.Window.Resize(fyne.NewSize(1280, 720))   // initial size (before FS)
 	// t.Window.SetFullScreen(true)               // launch fullscreen
-	// t.Window.Canvas().SetScale(1.35)           // <— makes ALL labels & widgets bigger (try 1.25–1.5)
 
 	// title widget
 	t.Title = canvas.NewText("Today", theme.Color(theme.ColorNameForeground))
@@ -44,10 +43,13 @@ func initializeInterface(appId, windowTitle string) *TrackerApp {
 	t.Clock.TextStyle = fyne.TextStyle{Monospace: true, Bold: true}
 	t.Clock.TextSize  = theme.TextSize() * 3.2   // really big
 
-	// status widget
-	t.Status = widget.NewLabel("activity")
-	t.Status.Alignment = fyne.TextAlignCenter
-	t.Status.Importance = widget.MediumImportance
+	// activity widgets
+	t.AverageActivityWidget = widget.NewLabel("Average activity")
+	t.AverageActivityWidget.Alignment = fyne.TextAlignCenter
+	t.AverageActivityWidget.Importance = widget.MediumImportance
+	t.CurrentActivityWidget = widget.NewLabel("Current activity")
+	t.CurrentActivityWidget.Alignment = fyne.TextAlignCenter
+	t.CurrentActivityWidget.Importance = widget.MediumImportance
 
 	// start button
 	t.Button = widget.NewButtonWithIcon("Start", theme.MediaPlayIcon(), nil)

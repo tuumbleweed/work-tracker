@@ -35,7 +35,8 @@ func (t *TrackerApp) setContent() {
 		layout.NewVBoxLayout(),
 		t.Title,
 		t.Clock,
-		t.Status,
+		t.AverageActivityWidget,
+		t.CurrentActivityWidget,
 		container.NewCenter(t.Button),
 	)
 	t.Window.SetContent(container.NewPadded(content))
@@ -102,14 +103,16 @@ func (t *TrackerApp) updateInterface() {
 	lastTickActivityPercentage := getActivityPercentage(lastTickActiveDuration, t.TickInterval)
 
 	clockText := formatDuration(workedToday)
-	activityText := fmt.Sprintf("Average activity: %.1f%%, Current activity: %.1f%%", todayAverageActivityPrecentage, lastTickActivityPercentage)
+	avgActivityText := fmt.Sprintf("Average activity: %.1f%%", todayAverageActivityPrecentage)
+	currentActivityText := fmt.Sprintf("Current activity: %.1f%%", lastTickActivityPercentage)
 
 	fyne.Do(func() {
 		// update clock
 		t.Clock.Text = clockText
 		t.Clock.Refresh()
 		// update activity
-		t.Status.SetText(activityText)
+		t.AverageActivityWidget.SetText(avgActivityText)
+		t.CurrentActivityWidget.SetText(currentActivityText)
 
 		// update button
 		if isRunning {

@@ -14,10 +14,11 @@ type TrackerApp struct {
 	Window fyne.Window
 
 	// UI elements
-	Title  *canvas.Text
-	Clock  *canvas.Text
-	Status *widget.Label
-	Button *widget.Button
+	Title                 *canvas.Text
+	Clock                 *canvas.Text
+	AverageActivityWidget *widget.Label
+	CurrentActivityWidget *widget.Label
+	Button                *widget.Button
 
 	// tickers
 	Ticker        *time.Ticker  // UI and activity clock
