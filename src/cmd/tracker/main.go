@@ -9,7 +9,7 @@ import (
 	"my-project/src/pkg/config"
 	"my-project/src/pkg/logger"
 	"my-project/src/pkg/util"
-	"my-project/src/pkg/worktracker"
+	"my-project/src/pkg/work-tracker"
 )
 
 func main() {
