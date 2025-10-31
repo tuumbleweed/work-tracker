@@ -14,16 +14,18 @@ import (
 type ActivityBar struct {
 	widget.BaseWidget
 
-	Caption string   // e.g., "Average activity"
-	percent float64  // 0..100
-	col     color.Color
+	Caption    string  // e.g., "Average activity"
+	percent    float64 // 0..100
+	col        color.Color
+	WidthRatio float32 // fraction of available width to use for the bar (0..1), e.g. 0.8 for 80%
 }
 
 func NewActivityBar(caption string) *ActivityBar {
 	ab := &ActivityBar{
-		Caption: caption,
-		percent: 0,
-		col:     color.NRGBA{R: 200, G: 40, B: 40, A: 255}, // start red-ish
+		Caption:    caption,
+		percent:    0,
+		col:        color.NRGBA{R: 200, G: 40, B: 40, A: 255}, // start red-ish
+		WidthRatio: 0.5,                                       // default to 80%
 	}
 	ab.ExtendBaseWidget(ab)
 	return ab
@@ -38,6 +40,17 @@ func (a *ActivityBar) SetPercent(p float64) {
 	}
 	a.percent = p
 	a.col = barColorFor(p)
+	a.Refresh()
+}
+
+func (a *ActivityBar) SetWidthRatio(r float32) {
+	if r < 0 {
+		r = 0
+	}
+	if r > 1 {
+		r = 1
+	}
+	a.WidthRatio = r
 	a.Refresh()
 }
 
@@ -85,21 +98,32 @@ func (r *activityBarRenderer) Layout(sz fyne.Size) {
 
 	// Bar area below caption
 	barY := capH + theme.Padding()/2
-	barH := float32(math.Max(24, float64(theme.TextSize())*1.6)) // nice chunky bar
-	barSize := fyne.NewSize(sz.Width, barH)
-	r.bg.Move(fyne.NewPos(0, barY))
-	r.bg.Resize(barSize)
+	barH := float32(math.Max(24, float64(theme.TextSize())*1.6))
+
+	// Compute inner (shorter) width and center it
+	innerW := float32(float64(sz.Width) * float64(r.a.WidthRatio))
+	if innerW < 0 {
+		innerW = 0
+	}
+	if innerW > sz.Width {
+		innerW = sz.Width
+	}
+	innerX := (sz.Width - innerW) / 2
+
+	// Background bar
+	r.bg.Move(fyne.NewPos(innerX, barY))
+	r.bg.Resize(fyne.NewSize(innerW, barH))
 
 	// Fill width by percent
-	fillW := float32(float64(sz.Width) * (r.a.percent / 100.0))
+	fillW := float32(float64(innerW) * (r.a.percent / 100.0))
 	r.fill.FillColor = r.a.col
-	r.fill.Move(fyne.NewPos(0, barY))
+	r.fill.Move(fyne.NewPos(innerX, barY))
 	r.fill.Resize(fyne.NewSize(fillW, barH))
 
-	// Centered percentage text over the bar
+	// Centered percentage text over the bar (align to the inner bar width)
 	r.percentT.Text = fmt.Sprintf("%.1f%%", r.a.percent)
-	r.percentT.Move(fyne.NewPos(0, barY+(barH-r.percentT.MinSize().Height)/2))
-	r.percentT.Resize(fyne.NewSize(sz.Width, r.percentT.MinSize().Height))
+	r.percentT.Move(fyne.NewPos(innerX, barY+(barH-r.percentT.MinSize().Height)/2))
+	r.percentT.Resize(fyne.NewSize(innerW, r.percentT.MinSize().Height))
 }
 
 func (r *activityBarRenderer) MinSize() fyne.Size {
@@ -114,7 +138,7 @@ func (r *activityBarRenderer) Refresh() {
 	canvas.Refresh(r.a)
 }
 
-func (r *activityBarRenderer) Destroy()          {}
+func (r *activityBarRenderer) Destroy()                     {}
 func (r *activityBarRenderer) Objects() []fyne.CanvasObject { return r.objects }
 
 // --- helpers ---
@@ -123,10 +147,10 @@ func barColorFor(p float64) color.Color {
 	// Red → Yellow → Green thresholds (tweak if you like)
 	switch {
 	case p < 40:
-		return color.NRGBA{R: 220, G: 60, B: 60, A: 255}   // red
+		return color.NRGBA{R: 220, G: 60, B: 60, A: 255} // red
 	case p < 70:
-		return color.NRGBA{R: 235, G: 190, B: 50, A: 255}  // yellow
+		return color.NRGBA{R: 235, G: 190, B: 50, A: 255} // yellow
 	default:
-		return color.NRGBA{R: 60, G: 180, B: 90, A: 255}   // green
+		return color.NRGBA{R: 60, G: 180, B: 90, A: 255} // green
 	}
 }
