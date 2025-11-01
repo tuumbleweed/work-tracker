@@ -386,41 +386,6 @@ func readDayFile(filePath string, date time.Time, smooth float64) (sum DaySummar
 }
 
 /*
-Build SVG radial progress ring (inline, Gmail-friendly).
-*/
-func buildRadialProgressSVG(size int, stroke int, percent float64, colorHex string) string {
-	if percent < 0 {
-		percent = 0
-	}
-	if percent > 100 {
-		percent = 100
-	}
-	r := float64(size-stroke) / 2.0
-	circ := 2.0 * math.Pi * r
-	fill := circ * percent / 100.0
-	offset := circ - fill
-	cx := float64(size) / 2.0
-	cy := float64(size) / 2.0
-	font := int(float64(size) * 0.28)
-	return fmt.Sprintf(
-		`<svg width="%d" height="%d" viewBox="0 0 %d %d" xmlns="http://www.w3.org/2000/svg" style="display:block;">
-  <circle cx="%.1f" cy="%.1f" r="%.1f" fill="none" stroke="#e6e6e6" stroke-width="%d"/>
-  <circle cx="%.1f" cy="%.1f" r="%.1f" fill="none" stroke="%s" stroke-width="%d"
-          stroke-linecap="round"
-          stroke-dasharray="%.1f"
-          stroke-dashoffset="%.1f"
-          transform="rotate(-90 %.1f %.1f)"/>
-  <text x="50%%" y="50%%" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-size="%d" fill="#222">%.1f%%</text>
-</svg>`,
-		size, size, size, size,
-		cx, cy, r, stroke,
-		cx, cy, r, colorHex, stroke,
-		circ, offset, cx, cy,
-		font, percent,
-	)
-}
-
-/*
 Day-of-week short label.
 */
 func weekdayShort(t time.Time) string { return t.Weekday().String()[:3] }
@@ -576,11 +541,12 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
             <tr valign="middle">
               <td align="center" style="padding:0 16px;">
                 <div style="font-family:Arial, sans-serif;font-size:13px;color:#666;padding-bottom:4px;">Total Worked</div>
-                <div style="font-family:Arial, sans-serif;font-size:28px;color:#111;font-weight:bold;">%s</div>
+                <div style="font-family:Arial, sans-serif;font-size:30px;color:#111;font-weight:bold;">%s</div>
               </td>
               <td align="center" style="padding:0 16px;">
                 <div style="font-family:Arial, sans-serif;font-size:13px;color:#666;padding-bottom:4px;">Avg Activity</div>
                 %s
+                <div style="font-family:Arial, sans-serif;font-size:18px;color:#111;font-weight:bold;margin-top:6px;">%.1f%%</div>
               </td>
             </tr>
           </table>
@@ -592,7 +558,13 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
         <td align="center" style="padding:4px 12px 10px 12px;">
           <div style="font-family:Arial, sans-serif;font-size:14px;color:#444;padding-bottom:6px;font-weight:bold;">Tasks in period</div>
           <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-`, rangeTitle(startDate, endDate), rangeTitle(startDate, endDate), formatDuration(totals.TotalWorked), buildRadialProgressSVG(96, 10, avgActivity, activityHex))
+`,
+	rangeTitle(startDate, endDate),
+	rangeTitle(startDate, endDate),
+	formatDuration(totals.TotalWorked),
+	buildSquares10HTML(avgActivity, activityHex),
+	avgActivity,
+)
 
 	for i, name := range taskNames {
 		dur := totals.PerTaskTotals[name]
@@ -869,6 +841,42 @@ func buildReport(inputDir string, startDate, endDate time.Time, outPath string, 
 	}
 	logger.Log(logger.Notice, logger.GreenColor, "%s report to '%s' (%s, %s days)", "Wrote", outPath, formatDuration(totals.TotalWorked), len(daySummaries))
 	return nil
+}
+
+// Gmail-safe "10 squares" indicator.
+// percent is 0..100; filled squares use fillHex, empty use #e6e6e6.
+// Squares are flat (no border-radius) as requested.
+func buildSquares10HTML(percent float64, fillHex string) string {
+	if percent < 0 {
+		percent = 0
+	}
+	if percent > 100 {
+		percent = 100
+	}
+	filled := int(math.Floor(percent / 10.0))
+	if filled < 0 {
+		filled = 0
+	}
+	if filled > 10 {
+		filled = 10
+	}
+
+	var b strings.Builder
+	b.WriteString(`<div>`)
+	for i := 0; i < 10; i++ {
+		col := "#e6e6e6"
+		if i < filled {
+			col = fillHex
+		}
+		// no right margin on the last square
+		if i == 9 {
+			fmt.Fprintf(&b, `<span style="display:inline-block;width:12px;height:12px;background:%s;"></span>`, col)
+		} else {
+			fmt.Fprintf(&b, `<span style="display:inline-block;width:12px;height:12px;background:%s;margin-right:4px;"></span>`, col)
+		}
+	}
+	b.WriteString(`</div>`)
+	return b.String()
 }
 
 func main() {
