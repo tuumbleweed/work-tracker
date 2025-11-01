@@ -25,7 +25,7 @@ func InitializeTrackerApp(appId, windowTitle, workDir string, tickInterval, flus
 	trackerApp.CurrentFilePath = dayFilePath(trackerApp.Workdir, trackerApp.CurrentDateID)
 
 	// get information about total duration and active time
-	trackerApp.WorkedToday, trackerApp.ActiveToday, e = loadFileActivityAndDuration(trackerApp.CurrentFilePath)
+	trackerApp.WorkedToday, trackerApp.ActiveToday, trackerApp.TimeByTask, e = loadFileActivityAndDuration(trackerApp.CurrentFilePath)
 	if e != nil {
 		return trackerApp, e
 	}

@@ -21,15 +21,16 @@ loadFileActivityAndDuration reads a per-day JSONL file and returns:
 It processes the file in one pass. Any malformed line (bad JSON)
 or a chunk where FinishedAt is not after StartedAt triggers an immediate error return.
 */
-func loadFileActivityAndDuration(filePath string) (totalDuration, totalActiveTime time.Duration, e *er.Error) {
+func loadFileActivityAndDuration(filePath string) (totalDuration, totalActiveTime time.Duration, timeByTask map[string]time.Duration, e *er.Error) {
 	logger.Log(logger.Notice, logger.BlueColor, "Reading %s and %s from '%s'", "activity", "duration", filePath)
 
+	timeByTask = make(map[string]time.Duration)
 	fileHandle, openErr := os.Open(filePath)
 	if openErr != nil {
 		// e = er.NewErrorECOL(openErr, "failed to open JSONL file", "path", filePath)
 		// return totalDuration, totalActiveTime, e
 		logger.Log(logger.Notice, logger.BoldPurpleColor, "No such file: '%s', %s", filePath, "skipping this step")
-		return 0, 0, nil
+		return 0, 0, timeByTask, nil
 	}
 	defer func() {
 		closeErr := fileHandle.Close()
@@ -62,7 +63,7 @@ func loadFileActivityAndDuration(filePath string) (totalDuration, totalActiveTim
 				},
 			)
 			logger.Log(logger.Notice, logger.PurpleColor, "Premature exit on malformed JSON at line %v in '%s'", lineNumber, filePath)
-			return totalDuration, totalActiveTime, e
+			return totalDuration, totalActiveTime, timeByTask, e
 		}
 
 		if chunk.StartedAt.IsZero() {
@@ -72,7 +73,7 @@ func loadFileActivityAndDuration(filePath string) (totalDuration, totalActiveTim
 				},
 			)
 			logger.Log(logger.Notice, logger.PurpleColor, "Premature exit: %s at line %v in '%s'", "zero StartedAt", lineNumber, filePath)
-			return totalDuration, totalActiveTime, e
+			return totalDuration, totalActiveTime, timeByTask, e
 		}
 		if chunk.FinishedAt.IsZero() {
 			e = er.NewErrorECML(errors.New("invalid chunk"), "invalid chunk: FinishedAt is zero", "context",
@@ -81,7 +82,7 @@ func loadFileActivityAndDuration(filePath string) (totalDuration, totalActiveTim
 				},
 			)
 			logger.Log(logger.Notice, logger.PurpleColor, "Premature exit: %s at line %v in '%s'", "zero FinishedAt", lineNumber, filePath)
-			return totalDuration, totalActiveTime, e
+			return totalDuration, totalActiveTime, timeByTask, e
 		}
 		if !chunk.FinishedAt.After(chunk.StartedAt) {
 			e = er.NewErrorECML(errors.New("invalid time interval"), "invalid time interval: FinishedAt is not after StartedAt", "context",
@@ -92,7 +93,7 @@ func loadFileActivityAndDuration(filePath string) (totalDuration, totalActiveTim
 				},
 			)
 			logger.Log(logger.Notice, logger.PurpleColor, "Premature exit on invalid interval at line %v in '%s'", lineNumber, filePath)
-			return totalDuration, totalActiveTime, e
+			return totalDuration, totalActiveTime, timeByTask, e
 		}
 
 		chunkInterval := chunk.FinishedAt.Sub(chunk.StartedAt)
@@ -108,20 +109,21 @@ func loadFileActivityAndDuration(filePath string) (totalDuration, totalActiveTim
 				},
 			)
 			logger.Log(logger.Notice, logger.PurpleColor, "Premature exit on invalid active time at line %v in '%s'", lineNumber, filePath)
-			return totalDuration, totalActiveTime, e
+			return totalDuration, totalActiveTime, timeByTask, e
 		}
 
 		totalDuration += chunkInterval
 		totalActiveTime += chunk.ActiveTime
+		timeByTask[chunk.TaskName] += chunkInterval
 	}
 
 	scanErr := scanner.Err()
 	if scanErr != nil {
 		e = er.NewErrorECOL(scanErr, "scanner error while reading JSONL file", "path", filePath)
 		logger.Log(logger.Notice, logger.PurpleColor, "Premature exit: %s '%s'", "scanner error in", filePath)
-		return totalDuration, totalActiveTime, e
+		return totalDuration, totalActiveTime, timeByTask, e
 	}
 
 	logger.Log(logger.Notice, logger.GreenColor, "Computed totals for '%s'", filePath)
-	return totalDuration, totalActiveTime, nil
+	return totalDuration, totalActiveTime, timeByTask, nil
 }

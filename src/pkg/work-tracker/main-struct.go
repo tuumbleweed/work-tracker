@@ -41,6 +41,7 @@ type TrackerApp struct {
 	ActiveToday                      time.Duration // how much out of that time user was active
 	ActiveDuringThisChunk            time.Duration // how long user been active during this chunk
 	LastTickActiveDuration           time.Duration // how much out of that user was active
+	TimeByTask                       map[string]time.Duration
 
 	// mutex
 	Mutex sync.Mutex
