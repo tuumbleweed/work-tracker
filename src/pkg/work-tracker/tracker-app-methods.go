@@ -24,8 +24,8 @@ func (t *TrackerApp) Start() {
 			isRunning := t.IsRunning
 		t.Mutex.Unlock()
 		if !isRunning {
-			for _, buttonTaskPair := range allTableButtonTaskPairs {
-				showStopped(buttonTaskPair.Button)
+			for _, taskButton := range allTableButtonTaskPairs {
+				showStopped(taskButton)
 			}
 			logger.Log(logger.Info, logger.CyanColor, "%s. Task name: '%s'", "Stopping task", currentTaskName)
 		} else {

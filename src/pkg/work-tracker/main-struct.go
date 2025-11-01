@@ -20,7 +20,7 @@ type TrackerApp struct {
 	AverageActivityBar *ActivityBar
 	CurrentActivityBar *ActivityBar
 	Button             *widget.Button
-	TableButtons       []ButtonTaskPair
+	TableButtons       map[string]*widget.Button
 	TasksContainer     *fyne.Container
 
 	// tickers
@@ -54,7 +54,7 @@ type TrackerApp struct {
 	CurrentTaskName string    // which task is running right now, can be empty
 }
 
-type ButtonTaskPair struct {
-	TaskName string
-	Button   *widget.Button
-}
+// type ButtonTaskPair struct {
+// 	TaskName string
+// 	Button   *widget.Button
+// }

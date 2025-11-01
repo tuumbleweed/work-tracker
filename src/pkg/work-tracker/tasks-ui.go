@@ -24,6 +24,7 @@ const (
 )
 
 func (t *TrackerApp) makeTasksUI(tasks []Task) *fyne.Container {
+	t.TableButtons = make(map[string]*widget.Button)
 	// Title
 	sectionTitle := canvas.NewText("Tasks", theme.Color(theme.ColorNameForeground))
 	sectionTitle.Alignment = fyne.TextAlignCenter
@@ -71,9 +72,8 @@ func (t *TrackerApp) makeTasksUI(tasks []Task) *fyne.Container {
 				// if previous task name IS equal to the new one - flipSwitch (onButtonTapped)
 
 				// we can first showStopped all of the buttons
-				for _, buttonTaskPair := range allTableButtonTaskPairs {
-					// fmt.Println(buttonTaskPair.TaskName)
-					showStopped(buttonTaskPair.Button)
+				for _, taskButton := range allTableButtonTaskPairs {
+					showStopped(taskButton)
 				}
 				// then handle the differences
 				if previousTaskName != newTaskName {
@@ -102,7 +102,7 @@ func (t *TrackerApp) makeTasksUI(tasks []Task) *fyne.Container {
 			t.Mutex.Unlock()
 			t.updateInterface() // update interface to show current task name right away
 		}
-		t.TableButtons = append(t.TableButtons, ButtonTaskPair{TaskName: task.Name, Button: rowPlayButton})
+		t.TableButtons[task.Name] = rowPlayButton
 
 		// center: Description (expands; ellipsis)
 		description := flexVCenterTruncated(task.Description)
@@ -110,7 +110,7 @@ func (t *TrackerApp) makeTasksUI(tasks []Task) *fyne.Container {
 		// right group: Created + Hours (both fixed)
 		right := container.NewHBox(
 			fixedCellCenteredTruncated(task.CreatedAt.Format("Mon Jan 02 2006 15:04:05"), colCreatedAtWidth),
-			fixedCellCenteredTruncated("0.0 h", colHoursWidth),
+			fixedCellCenteredTruncated(t.TimeByTask[task.Name].String(), colHoursWidth),
 		)
 
 		row := container.NewBorder(nil, nil, leftBox, right, description)
