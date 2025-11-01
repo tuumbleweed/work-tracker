@@ -29,26 +29,26 @@ func initializeInterface(appId, windowTitle string) (t *TrackerApp, e *er.Error)
 
 	// Start large + fullscreen
 	t.Window = t.App.NewWindow(windowTitle)
-	t.Window.Resize(fyne.NewSize(1280, 720))   // initial size (before FS)
-	// t.Window.SetFullScreen(true)               // launch fullscreen
+	t.Window.Resize(fyne.NewSize(1280, 720)) // initial size (before FS)
+	// t.Window.SetFullScreen(true)          // launch fullscreen
 
 	// title canvas
 	t.Title = canvas.NewText("Today", theme.Color(theme.ColorNameForeground))
 	t.Title.Alignment = fyne.TextAlignCenter
 	t.Title.TextStyle = fyne.TextStyle{Bold: true}
-	t.Title.TextSize  = theme.TextSize() * 2.0   // 2x normal
+	t.Title.TextSize = theme.TextSize() * 2.0 // 2x normal
 
 	// task name canva
 	t.TaskLabel = canvas.NewText("Current Task", theme.Color(theme.ColorNameForeground))
 	t.TaskLabel.Alignment = fyne.TextAlignCenter
 	t.TaskLabel.TextStyle = fyne.TextStyle{Bold: false}
-	t.TaskLabel.TextSize  = theme.TextSize() * 2.0   // 2x normal
+	t.TaskLabel.TextSize = theme.TextSize() * 2.0 // 2x normal
 
 	// clock widget
 	t.Clock = canvas.NewText("00:00:00", theme.Color(theme.ColorNameForeground))
 	t.Clock.Alignment = fyne.TextAlignCenter
 	t.Clock.TextStyle = fyne.TextStyle{Monospace: true, Bold: true}
-	t.Clock.TextSize  = theme.TextSize() * 3.2   // really big
+	t.Clock.TextSize = theme.TextSize() * 3.2 // really big
 
 	// activity bars
 	t.AverageActivityBar = NewActivityBar("Average activity")

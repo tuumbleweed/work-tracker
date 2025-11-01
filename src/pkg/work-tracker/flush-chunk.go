@@ -10,7 +10,11 @@ import (
 	"work-tracker/src/pkg/logger"
 )
 
-func flushChunk(filePath string, start, end time.Time, ActiveDuringThisChunk time.Duration) (e *er.Error) {
+func flushChunk(
+	filePath string, start, end time.Time, ActiveDuringThisChunk time.Duration,
+	currentTaskName string,
+) (e *er.Error) {
+
 	logger.Log(logger.Detailed, logger.BlueColor, "%s chunk to file: '%s'", "Flushing", filePath)
 
 	if !end.After(start) {
@@ -31,6 +35,7 @@ func flushChunk(filePath string, start, end time.Time, ActiveDuringThisChunk tim
 	ActiveDuringThisChunk = Clamp(ActiveDuringThisChunk, 0, duration)
 
 	chunk := Chunk{
+		TaskName:   currentTaskName,
 		StartedAt:  start,
 		FinishedAt: end,
 		ActiveTime: ActiveDuringThisChunk,

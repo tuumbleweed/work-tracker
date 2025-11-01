@@ -249,7 +249,7 @@ func (t *TrackerApp) flushChunkIfRunning() {
 	t.Mutex.Lock()
 	if t.IsRunning {
 		now := time.Now()
-		e := flushChunk(t.CurrentFilePath, t.ChunkStart, now, t.ActiveDuringThisChunk)
+		e := flushChunk(t.CurrentFilePath, t.ChunkStart, now, t.ActiveDuringThisChunk, t.CurrentTaskName)
 		if e != nil {
 			e.QuitIf("error") // don't expect any errors here, so quit if found one
 		}
