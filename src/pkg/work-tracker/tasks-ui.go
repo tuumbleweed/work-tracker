@@ -16,7 +16,7 @@ const (
 	colPlayButtonWidth  = 32
 	colNameWidth        = 260
 	colDescriptionWidth = 420
-	colCreatedAtWidth   = 180
+	colCreatedAtWidth   = 260
 	colHoursWidth       = 90
 	// single-line row height
 	rowHeight = 50
@@ -35,7 +35,7 @@ func (t *TrackerApp) makeTasksUI(tasks []Task) *fyne.Container {
 		fixedCell(labelHeader("Task"), colNameWidth),
 	)
 	rightHeader := container.NewHBox(
-		fixedCell(labelHeader("Created"), colCreatedAtWidth),
+		fixedCell(labelHeader("Created At"), colCreatedAtWidth),
 		fixedCell(labelHeader("Hours"), colHoursWidth),
 	)
 	descHead := minWidth(labelHeader("Description"), colDescriptionWidth) // e.g. colDescriptionWidth px minimum
@@ -56,7 +56,7 @@ func (t *TrackerApp) makeTasksUI(tasks []Task) *fyne.Container {
 
 		// right group: Created + Hours (both fixed)
 		right := container.NewHBox(
-			fixedCellCenteredTruncated(task.CreatedAt, colCreatedAtWidth),
+			fixedCellCenteredTruncated(task.CreatedAt.Format("Mon Jan 02 2006 15:04:05"), colCreatedAtWidth),
 			fixedCellCenteredTruncated("0.0 h", colHoursWidth),
 		)
 

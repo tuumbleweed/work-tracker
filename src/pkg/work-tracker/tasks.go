@@ -3,6 +3,7 @@ package worktracker
 import (
 	"encoding/json"
 	"os"
+	"time"
 
 	er "work-tracker/src/pkg/error"
 	"work-tracker/src/pkg/logger"
@@ -10,11 +11,10 @@ import (
 )
 
 type Task struct {
-	Name        string `json:"task_name"`
-	Description string `json:"task_description"`
-	CreatedAt   string `json:"created_at"` // keep as string for now (display-only)
+	Name        string    `json:"task_name"`
+	Description string    `json:"task_description"`
+	CreatedAt   time.Time `json:"created_at"`
 }
-
 
 func loadTasks(path string) (tasks []Task, e *er.Error) {
 	logger.Log(logger.Info, logger.BlueColor, "%s tasks list from '%s'", "Loading", path)
