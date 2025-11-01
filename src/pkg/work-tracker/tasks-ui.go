@@ -24,7 +24,7 @@ const (
 )
 
 func (t *TrackerApp) makeTasksUI(tasks []Task) *fyne.Container {
-	t.TableButtons = make(map[string]*widget.Button)
+	t.TableRows = make(map[string]TableRow)
 	// Title
 	sectionTitle := canvas.NewText("Tasks", theme.Color(theme.ColorNameForeground))
 	sectionTitle.Alignment = fyne.TextAlignCenter
@@ -47,18 +47,16 @@ func (t *TrackerApp) makeTasksUI(tasks []Task) *fyne.Container {
 	rows := container.NewVBox()
 	for _, task := range tasks {
 		// left group: ▶ + Task (both fixed widths)
+		_, nameCanvas := fixedCellCenteredTruncated(task.Name, colNameWidth)
 		rowPlayButton, playCell := smallButton(theme.MediaPlayIcon(), nil)
-		leftBox := container.NewHBox(
-			playCell,
-			fixedCellCenteredTruncated(task.Name, colNameWidth),
-		)
-		rowPlayButton.OnTapped = func() {
-			// t.onButtonTapped(false) // we did not flip the switch yet, so t.IsRunning remains the same
+		leftBox := container.NewHBox(playCell, nameCanvas)
 
+		// need to use mutex with those functions
+		rowPlayButton.OnTapped = func() {
 			t.Mutex.Lock()
-				isRunning := t.IsRunning
-				allTableButtonTaskPairs := t.TableButtons
-				previousTaskName := t.CurrentTaskName
+			isRunning := t.IsRunning
+			allTableRows := t.TableRows
+			previousTaskName := t.CurrentTaskName
 			t.Mutex.Unlock()
 			var newTaskName string = task.Name
 
@@ -72,8 +70,8 @@ func (t *TrackerApp) makeTasksUI(tasks []Task) *fyne.Container {
 				// if previous task name IS equal to the new one - flipSwitch (onButtonTapped)
 
 				// we can first showStopped all of the buttons
-				for _, taskButton := range allTableButtonTaskPairs {
-					showStopped(taskButton)
+				for _, tableRow := range allTableRows {
+					showStopped(tableRow.Button)
 				}
 				// then handle the differences
 				if previousTaskName != newTaskName {
@@ -98,20 +96,23 @@ func (t *TrackerApp) makeTasksUI(tasks []Task) *fyne.Container {
 
 			// now set t.CurrentTaskName to newTaskName
 			t.Mutex.Lock()
-				t.CurrentTaskName = newTaskName
+			t.CurrentTaskName = newTaskName
 			t.Mutex.Unlock()
 			t.updateInterface() // update interface to show current task name right away
 		}
-		t.TableButtons[task.Name] = rowPlayButton
 
 		// center: Description (expands; ellipsis)
 		description := flexVCenterTruncated(task.Description)
 
 		// right group: Created + Hours (both fixed)
-		right := container.NewHBox(
-			fixedCellCenteredTruncated(task.CreatedAt.Format("Mon Jan 02 2006 15:04:05"), colCreatedAtWidth),
-			fixedCellCenteredTruncated(t.TimeByTask[task.Name].String(), colHoursWidth),
-		)
+		_, createdAtCanvas := fixedCellCenteredTruncated(task.CreatedAt.Format("Mon Jan 02 2006 15:04:05"), colCreatedAtWidth)
+		timeLabel, timeCanvas := fixedCellCenteredTruncated(t.TimeByTask[task.Name].String(), colHoursWidth)
+		right := container.NewHBox(createdAtCanvas, timeCanvas)
+
+		t.TableRows[task.Name] = TableRow{
+			Button:    rowPlayButton,
+			TimeLabel: timeLabel,
+		}
 
 		row := container.NewBorder(nil, nil, leftBox, right, description)
 		rows.Add(row)
@@ -142,15 +143,15 @@ func minWidth(obj fyne.CanvasObject, minW int) fyne.CanvasObject {
 
 // fixedTruncVCenterCell gives obj the full cell size (so truncation works) and
 // centers it vertically with spacers. Text stays left-aligned.
-func fixedCellCenteredTruncated(text string, w int) fyne.CanvasObject {
+func fixedCellCenteredTruncated(text string, w int) (label *widget.Label, canvas fyne.CanvasObject) {
 	l := widget.NewLabel(text)
-	l.Wrapping = fyne.TextWrapOff        // no wrapping
+	l.Wrapping = fyne.TextWrapOff            // no wrapping
 	l.Truncation = fyne.TextTruncateEllipsis // "…" when too long
-	l.Alignment = fyne.TextAlignLeading  // left aligned
+	l.Alignment = fyne.TextAlignLeading      // left aligned
 
 	// VBox with spacers => vertical center; MaxLayout => child gets full cell size
 	v := container.NewVBox(layout.NewSpacer(), l, layout.NewSpacer())
-	return container.New(
+	return l, container.New(
 		layout.NewGridWrapLayout(fyne.NewSize(float32(w), rowHeight)),
 		container.New(layout.NewStackLayout(), v), // make v fill the fixed cell
 	)
@@ -158,9 +159,9 @@ func fixedCellCenteredTruncated(text string, w int) fyne.CanvasObject {
 
 func flexVCenterTruncated(text string) fyne.CanvasObject {
 	l := widget.NewLabel(text)
-	l.Wrapping   = fyne.TextWrapOff
+	l.Wrapping = fyne.TextWrapOff
 	l.Truncation = fyne.TextTruncateEllipsis
-	l.Alignment  = fyne.TextAlignLeading
+	l.Alignment = fyne.TextAlignLeading
 
 	v := container.NewVBox(layout.NewSpacer(), l, layout.NewSpacer())
 	// Fill all available center space in Border using StackLayout:
@@ -184,7 +185,7 @@ func smallButton(icon fyne.Resource, onTap func()) (*widget.Button, fyne.CanvasO
 func showRunning(button *widget.Button) {
 	fyne.Do(func() {
 		button.Importance = widget.WarningImportance // Importance change needs a Refresh()
-		button.SetIcon(theme.MediaPauseIcon()) // SetIcon calls Refresh
+		button.SetIcon(theme.MediaPauseIcon())       // SetIcon calls Refresh
 	})
 }
 
@@ -192,6 +193,6 @@ func showRunning(button *widget.Button) {
 func showStopped(button *widget.Button) {
 	fyne.Do(func() {
 		button.Importance = widget.MediumImportance // Importance change needs a Refresh()
-		button.SetIcon(theme.MediaPlayIcon()) // SetIcon calls Refresh
+		button.SetIcon(theme.MediaPlayIcon())       // SetIcon calls Refresh
 	})
 }

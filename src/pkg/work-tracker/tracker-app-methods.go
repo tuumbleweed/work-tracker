@@ -19,13 +19,13 @@ func (t *TrackerApp) Start() {
 		t.onButtonTapped()
 		// when main button stopped - showStopped all the buttons
 		t.Mutex.Lock()
-			allTableButtonTaskPairs := t.TableButtons
+			allTableRows := t.TableRows
 			currentTaskName := t.CurrentTaskName
 			isRunning := t.IsRunning
 		t.Mutex.Unlock()
 		if !isRunning {
-			for _, taskButton := range allTableButtonTaskPairs {
-				showStopped(taskButton)
+			for _, taskRow := range allTableRows {
+				showStopped(taskRow.Button)
 			}
 			logger.Log(logger.Info, logger.CyanColor, "%s. Task name: '%s'", "Stopping task", currentTaskName)
 		} else {
