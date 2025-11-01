@@ -81,12 +81,11 @@ type Chunk struct {
 Per-day aggregation used for charts.
 */
 type DaySummary struct {
-	Date                 time.Time                  `json:"date"`
-	TotalDuration        time.Duration              `json:"total_duration"`
-	TotalActive          time.Duration              `json:"total_active"`
-	TaskDurations        map[string]time.Duration   `json:"task_durations"`
-	SmoothedActiveTime   time.Duration              `json:"smoothed_active_time"` // Σ (duration * smooth(active_ratio))
-	DominantTaskOrdering []string                   `json:"-"`
+	Date               time.Time                `json:"date"`
+	TotalDuration      time.Duration            `json:"total_duration"`
+	TotalActive        time.Duration            `json:"total_active"`
+	TaskDurations      map[string]time.Duration `json:"task_durations"`
+	SmoothedActiveTime time.Duration            `json:"smoothed_active_time"` // Σ (duration * smooth(active_ratio))
 }
 
 /*
@@ -96,12 +95,11 @@ type ReportTotals struct {
 	TotalWorked   time.Duration
 	TotalActive   time.Duration
 	PerTaskTotals map[string]time.Duration
-	// For legend ordering
-	TaskOrder []string
+	TaskOrder     []string
 }
 
 /*
-Clamp helper.
+Clamp helpers + lerp.
 */
 func clamp01(x float64) float64 {
 	if x < 0 {
@@ -124,51 +122,86 @@ func lerpColor(c1, c2 color.NRGBA, t float64) color.NRGBA {
 }
 
 /*
-Activity color ramp: 0%→red, 50%→yellow, 75%→green, 100%→greenPeak
-(as provided). We return #RRGGBB for HTML.
+Activity color ramp: 0%→red, 50%→yellow, 75%→green, 100%→greenPeak (your ramp).
+We return #RRGGBB for HTML.
 */
 func barColorFor(p float64) color.Color {
-	red := color.NRGBA{R: 220, G: 60, B: 60, A: 255}    // 0%
+	red := color.NRGBA{R: 220, G: 60, B: 60, A: 255}     // 0%
 	yellow := color.NRGBA{R: 235, G: 190, B: 50, A: 255} // 50%
 	green := color.NRGBA{R: 60, G: 180, B: 90, A: 255}   // 75%
-	// green peak at 100% (same hue family, different brightness/sat)
-	greenPeak := color.NRGBA{R: 20, G: 180, B: 45, A: 255} // deeper/richer toward 100%
+	greenPeak := color.NRGBA{R: 20, G: 180, B: 45, A: 255} // 100%
 
 	t := clamp01(p / 100.0)
-
 	switch {
 	case t <= 0.5:
-		// 0..50%: red -> yellow
 		return lerpColor(red, yellow, t*2.0)
 	case t <= 0.75:
-		// 50..75%: yellow -> green
 		return lerpColor(yellow, green, (t-0.5)*4.0)
 	default:
-		// 75..100%: green -> greenPeak
-		u := (t - 0.75) * 4.0 // map [0.75,1] → [0,1]
+		u := (t - 0.75) * 4.0
 		return lerpColor(green, greenPeak, u)
 	}
 }
-
 func colorToHex(c color.Color) string {
 	r, g, b, _ := c.RGBA()
 	return fmt.Sprintf("#%02X%02X%02X", uint8(r>>8), uint8(g>>8), uint8(b>>8))
 }
 
 /*
-Deterministic task color from name using FNV-1a -> HSL -> RGB.
-We keep saturation/lightness pleasant and readable, and let hue carry distinctness.
+Categorical palette with wide-separated hue bands (12+ families).
+Mapping is deterministic per task name, but ensures bands differ a lot.
+
+We pick:
+- blue(210–230), indigo(235–255), cyan(190–205), teal(170–185),
+- green(120–135), lime(95–110), yellow(50–60), amber(35–45),
+- orange(20–30), pink(335–350), magenta(310–330), purple(270–290).
+
+Inside a band we vary hue and lightness a little using extra hash bits.
 */
+type hueBand struct {
+	hMin float64
+	hMax float64
+	s    float64
+	l    float64
+}
+
+var paletteBands = []hueBand{
+	{210, 230, 0.70, 0.52}, // blue
+	{235, 255, 0.65, 0.52}, // indigo
+	{190, 205, 0.70, 0.48}, // cyan
+	{170, 185, 0.65, 0.50}, // teal
+	{120, 135, 0.65, 0.50}, // green
+	{95, 110, 0.70, 0.48},  // lime
+	{50, 60, 0.90, 0.46},   // yellow (bit darker for contrast)
+	{35, 45, 0.85, 0.50},   // amber
+	{20, 30, 0.80, 0.50},   // orange
+	{335, 350, 0.65, 0.52}, // pink
+	{310, 330, 0.65, 0.52}, // magenta
+	{270, 290, 0.60, 0.52}, // purple
+}
+
 func taskColorHex(task string) string {
 	h := fnv.New32a()
 	_, _ = h.Write([]byte(task))
 	hash := h.Sum32()
-	hue := float64(hash%360) // 0..359
-	sat := 0.60              // 60%
-	light := 0.55            // 55%
-	r, g, b := hslToRGB(hue/360.0, sat, light)
+
+	bandIdx := int(hash % uint32(len(paletteBands)))
+	band := paletteBands[bandIdx]
+
+	// vary hue inside band
+	inner := float64((hash>>8)%1000) / 1000.0 // 0..1
+	hue := band.hMin + inner*(band.hMax-band.hMin)
+
+	// vary lightness slightly across 3 steps for more distincts per band
+	lightSteps := []float64{-0.07, 0.0, +0.06}
+	li := int((hash>>18)%uint32(len(lightSteps)))
+	light := clamp01(band.l + lightSteps[li])
+
+	r, g, b := hslToRGB(hue/360.0, band.s, light)
 	return fmt.Sprintf("#%02X%02X%02X", r, g, b)
 }
+
+// HSL -> RGB helpers
 func hslToRGB(h, s, l float64) (uint8, uint8, uint8) {
 	if s == 0 {
 		v := uint8(l * 255.0)
@@ -208,8 +241,7 @@ func hue2rgb(p, q, t float64) float64 {
 /*
 Smooth activity factor f∈[0,1] by exponent α = 1 - smooth (smooth∈[0,1]).
 - smooth=0.0 => α=1 => linear (no smoothing).
-- smooth=1.0 => α≈0 => strong compression (low f boosted relatively).
-We clamp α to [0.2, 1] for numeric stability.
+- smooth=1.0 => α≈0.2 (clamped) => strong compression.
 */
 func smoothFactor(f, smooth float64) float64 {
 	if f <= 0 {
@@ -235,7 +267,7 @@ func formatDuration(d time.Duration) string {
 	if d <= 0 {
 		return "0s"
 	}
-	secs := int64(d.Seconds() + 0.5) // round to nearest second for display
+	secs := int64(d.Seconds() + 0.5) // round
 	h := secs / 3600
 	m := (secs % 3600) / 60
 	s := secs % 60
@@ -246,7 +278,7 @@ func formatDuration(d time.Duration) string {
 	if m > 0 {
 		fmt.Fprintf(out, "%dm ", m)
 	}
-	if s > 0 && h == 0 { // suppress seconds when already have hours to keep it compact
+	if s > 0 && h == 0 { // suppress seconds if hours present
 		fmt.Fprintf(out, "%ds", s)
 	}
 	return strings.TrimSpace(out.String())
@@ -268,7 +300,6 @@ Compute Monday..Sunday of the current week in the given location.
 */
 func currentWeekRange(loc *time.Location) (time.Time, time.Time) {
 	now := time.Now().In(loc)
-	// normalize to local midnight
 	base := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
 	wd := int(base.Weekday())
 	if wd == 0 {
@@ -284,10 +315,10 @@ Read a single day file into a DaySummary. Missing file => empty summary (no erro
 */
 func readDayFile(filePath string, date time.Time, smooth float64) (sum DaySummary, e *er.Error) {
 	sum = DaySummary{
-		Date:           date,
-		TaskDurations:  make(map[string]time.Duration),
-		TotalDuration:  0,
-		TotalActive:    0,
+		Date:               date,
+		TaskDurations:      make(map[string]time.Duration),
+		TotalDuration:      0,
+		TotalActive:        0,
 		SmoothedActiveTime: 0,
 	}
 
@@ -310,7 +341,6 @@ func readDayFile(filePath string, date time.Time, smooth float64) (sum DaySummar
 	defer f.Close()
 
 	sc := bufio.NewScanner(f)
-	// allow long JSONL lines
 	buf := make([]byte, 0, 64*1024)
 	sc.Buffer(buf, 2*1024*1024)
 
@@ -324,7 +354,6 @@ func readDayFile(filePath string, date time.Time, smooth float64) (sum DaySummar
 		var ch Chunk
 		uErr := json.Unmarshal([]byte(line), &ch)
 		if uErr != nil {
-			// Non-fatal: skip malformed line, but record with context.
 			logger.Log(logger.Notice, logger.PurpleColor, "%s malformed JSON in '%s' line %d", "Skipping", filePath, lineNumber)
 			continue
 		}
@@ -347,8 +376,7 @@ func readDayFile(filePath string, date time.Time, smooth float64) (sum DaySummar
 		if strings.TrimSpace(task) == "" {
 			task = "(No task)"
 		}
-		prev := sum.TaskDurations[task]
-		sum.TaskDurations[task] = prev + dur
+		sum.TaskDurations[task] += dur
 
 		// smoothed contribution
 		ratio := 0.0
@@ -369,10 +397,6 @@ func readDayFile(filePath string, date time.Time, smooth float64) (sum DaySummar
 
 /*
 Build SVG radial progress ring (inline, Gmail-friendly).
-- size: px square
-- stroke: ring thickness
-- percent: 0..100
-- colorHex: stroke color
 */
 func buildRadialProgressSVG(size int, stroke int, percent float64, colorHex string) string {
 	if percent < 0 {
@@ -384,10 +408,10 @@ func buildRadialProgressSVG(size int, stroke int, percent float64, colorHex stri
 	r := float64(size-stroke) / 2.0
 	circ := 2.0 * math.Pi * r
 	fill := circ * percent / 100.0
-	offset := circ - fill // dashoffset gives remaining arc
+	offset := circ - fill
 	cx := float64(size) / 2.0
 	cy := float64(size) / 2.0
-	font := int(float64(size) * 0.28) // scale text nicely
+	font := int(float64(size) * 0.28)
 	return fmt.Sprintf(
 		`<svg width="%d" height="%d" viewBox="0 0 %d %d" xmlns="http://www.w3.org/2000/svg" style="display:block;">
   <circle cx="%.1f" cy="%.1f" r="%.1f" fill="none" stroke="#e6e6e6" stroke-width="%d"/>
@@ -407,11 +431,9 @@ func buildRadialProgressSVG(size int, stroke int, percent float64, colorHex stri
 }
 
 /*
-Day-of-week short label in English (Mon/Tue/...).
+Day-of-week short label.
 */
-func weekdayShort(t time.Time) string {
-	return t.Weekday().String()[:3]
-}
+func weekdayShort(t time.Time) string { return t.Weekday().String()[:3] }
 
 /*
 HTML helpers.
@@ -428,20 +450,34 @@ func esc(s string) string {
 }
 
 /*
+Format "Weekly Report — 25 Oct 2025 – 31 Oct 2025" (compact when same month/year).
+*/
+func rangeTitle(start, end time.Time) string {
+	if start.Equal(end) {
+		return fmt.Sprintf("Weekly Report — %s", start.Format("02 Jan 2006"))
+	}
+	if start.Year() == end.Year() && start.Month() == end.Month() {
+		return fmt.Sprintf("Weekly Report — %s – %s %d", start.Format("02"), end.Format("02 Jan"), end.Year())
+	}
+	if start.Year() == end.Year() {
+		return fmt.Sprintf("Weekly Report — %s – %s %d", start.Format("02 Jan"), end.Format("02 Jan"), end.Year())
+	}
+	return fmt.Sprintf("Weekly Report — %s – %s", start.Format("02 Jan 2006"), end.Format("02 Jan 2006"))
+}
+
+/*
 Render the entire HTML report into a buffer.
 - barRef is the "N hours" reference height target (e.g., 12h).
 - barHeightPx is the pixel height used for that reference.
 */
-func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals ReportTotals, barRef time.Duration, barHeightPx int, smooth float64, loc *time.Location) {
+func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals ReportTotals, barRef time.Duration, barHeightPx int, smooth float64, loc *time.Location, startDate, endDate time.Time) {
 	// ---------- precompute ----------
-	// time-per-pixel scale
 	pxPerSecond := float64(barHeightPx) / barRef.Seconds()
-	// list of tasks for consistent stacked order and legend
+
 	taskNames := make([]string, 0, len(totals.PerTaskTotals))
 	for k := range totals.PerTaskTotals {
 		taskNames = append(taskNames, k)
 	}
-	// stable order: by total desc, then name
 	sort.Slice(taskNames, func(i, j int) bool {
 		di := totals.PerTaskTotals[taskNames[i]]
 		dj := totals.PerTaskTotals[taskNames[j]]
@@ -457,14 +493,14 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 	}
 	activityHex := colorToHex(barColorFor(avgActivity))
 
-	// convenience closures
+	// helpers
 	segHeight := func(d time.Duration) int {
 		if d <= 0 {
 			return 0
 		}
 		h := int(math.Round(float64(d.Seconds()) * pxPerSecond))
 		if h == 0 {
-			h = 1 // make tiny segments visible
+			h = 1
 		}
 		return h
 	}
@@ -481,29 +517,28 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Work-Tracker Report</title>
+    <title>%s</title>
   </head>
   <body style="margin:0;padding:0;background:#fafafa;">
     <!-- Wrapper -->
     <table role="presentation" width="100%%" cellpadding="0" cellspacing="0" style="max-width:760px;margin:0 auto;background:#fff;border-collapse:collapse;">
       <tr>
-        <td style="font-family:Arial, sans-serif;color:#222;font-size:16px;padding:16px 18px;border-bottom:1px solid #eee;">
-          Weekly Report
+        <td style="font-family:Arial, sans-serif;color:#222;font-size:16px;padding:12px 18px;border-bottom:1px solid #eee;">
+          %s
         </td>
       </tr>
 
       <!-- Summary Section -->
       <tr>
-        <td align="center" style="padding:18px 10px;">
+        <td align="center" style="padding:14px 8px;">
           <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
             <tr valign="middle">
-              <td align="center" style="padding:0 20px;">
-                <div style="font-family:Arial, sans-serif;font-size:14px;color:#666;padding-bottom:6px;">Total Worked</div>
+              <td align="center" style="padding:0 16px;">
+                <div style="font-family:Arial, sans-serif;font-size:13px;color:#666;padding-bottom:4px;">Total Worked</div>
                 <div style="font-family:Arial, sans-serif;font-size:28px;color:#111;font-weight:bold;">%s</div>
               </td>
-              <td align="center" style="padding:0 20px;">
-                <div style="font-family:Arial, sans-serif;font-size:14px;color:#666;padding-bottom:6px;">Avg Activity</div>
-                <!-- SVG ring -->
+              <td align="center" style="padding:0 16px;">
+                <div style="font-family:Arial, sans-serif;font-size:13px;color:#666;padding-bottom:4px;">Avg Activity</div>
                 %s
               </td>
             </tr>
@@ -511,57 +546,49 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
         </td>
       </tr>
 
-      <!-- Tasks List -->
+      <!-- Tasks in period (vertical list, centered) -->
       <tr>
-        <td align="center" style="padding:6px 12px 18px 12px;">
-          <div style="font-family:Arial, sans-serif;font-size:14px;color:#444;padding-bottom:10px;">Tasks in period</div>
+        <td align="center" style="padding:4px 12px 10px 12px;">
+          <div style="font-family:Arial, sans-serif;font-size:14px;color:#444;padding-bottom:6px;">Tasks in period</div>
           <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-`, formatDuration(totals.TotalWorked), buildRadialProgressSVG(96, 10, avgActivity, activityHex))
+`, rangeTitle(startDate, endDate), rangeTitle(startDate, endDate), formatDuration(totals.TotalWorked), buildRadialProgressSVG(96, 10, avgActivity, activityHex))
 
-	// centered list of tasks with color squares
-	// layout: multiple cells per row (wrap manually every N items for readability)
-	const itemsPerRow = 3
-	for i, name := range taskNames {
-		if i%itemsPerRow == 0 {
-			fmt.Fprintf(buf, "            <tr>\n")
-		}
+	// vertical list: one item per row
+	for _, name := range taskNames {
 		dur := totals.PerTaskTotals[name]
 		c := taskColorHex(name)
-		fmt.Fprintf(buf, `              <td style="padding:6px 12px;font-family:Arial, sans-serif;font-size:13px;color:#333;vertical-align:middle;">
-                <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+		fmt.Fprintf(buf, `            <tr>
+              <td style="padding:4px 10px;font-family:Arial, sans-serif;font-size:13px;color:#333;vertical-align:middle;text-align:center;">
+                <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 auto;">
                   <tr>
                     <td style="background:%s;width:12px;height:12px;line-height:0;font-size:0;">&nbsp;</td>
                     <td style="padding-left:8px;">%s&nbsp;<span style="color:#666;">— %s</span></td>
                   </tr>
                 </table>
               </td>
+            </tr>
 `, c, esc(name), esc(formatDuration(dur)))
-		if i%itemsPerRow == itemsPerRow-1 {
-			fmt.Fprintf(buf, "            </tr>\n")
-		}
 	}
-	if len(taskNames)%itemsPerRow != 0 {
-		fmt.Fprintf(buf, "            </tr>\n")
-	}
+
 	fmt.Fprintf(buf, `          </table>
         </td>
       </tr>
 
       <!-- Time by Day (stacked per task) -->
       <tr>
-        <td align="center" style="padding:8px 0 4px 0;">
+        <td align="center" style="padding:2px 0 0 0;">
           <div style="font-family:Arial, sans-serif;color:#222;font-size:14px;">Time by Day</div>
         </td>
       </tr>
       <tr>
-        <td align="center" style="padding:8px 0;">
+        <td align="center" style="padding:2px 0 0 0;">
           <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
             <tr valign="bottom">
 `)
 
-	// Marker gutter column (shows N hours line)
+	// Marker gutter column with reference line (tighter)
 	fmt.Fprintf(buf, `              <!-- Marker gutter -->
-              <td align="center" style="padding:0 8px;">
+              <td align="center" style="padding:0 6px;">
                 <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
                   <tr><td>
                     <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
@@ -570,35 +597,32 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
                     </table>
                   </td></tr>
                 </table>
-                <div style="font-family:Arial, sans-serif;font-size:11px;color:#777;padding-top:8px;">%s</div>
+                <div style="font-family:Arial, sans-serif;font-size:11px;color:#777;padding-top:6px;">%s</div>
               </td>
 `, barHeightPx, barHeightPx, esc(formatDuration(barRef)))
 
 	// Bars for each day
 	for _, dsum := range daySummaries {
-		// compute per-day ordering: keep the global order but skip zeros
+		// per-day order from global; skip zeros
 		dayTasks := make([]string, 0, len(taskNames))
 		for _, tname := range taskNames {
 			if dsum.TaskDurations[tname] > 0 {
 				dayTasks = append(dayTasks, tname)
 			}
 		}
-		// top spacer
 		topSpacer := spacerHeight(dsum.TotalDuration)
 
 		fmt.Fprintf(buf, `              <!-- Day bar -->
-              <td align="center" style="padding:0 10px;">
+              <td align="center" style="padding:0 8px;">
                 <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
                   <tr><td style="background:#e0e0e0;width:28px;height:%dpx;line-height:0;font-size:0;">
                     <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:28px;">
 `, barHeightPx)
 
-		// spacer
 		if topSpacer > 0 {
 			fmt.Fprintf(buf, `                      <tr><td style="height:%dpx;line-height:0;font-size:0;">&nbsp;</td></tr>
 `, topSpacer)
 		}
-		// segments (stacked bottom-up in the order listed)
 		for _, tname := range dayTasks {
 			seg := segHeight(dsum.TaskDurations[tname])
 			if seg <= 0 {
@@ -610,7 +634,7 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 		fmt.Fprintf(buf, `                    </table>
                   </td></tr>
                 </table>
-                <div style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding-top:8px;">%s</div>
+                <div style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding-top:6px;">%s</div>
               </td>
 `, esc(weekdayShort(dsum.Date)))
 	}
@@ -619,16 +643,15 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
         </td>
       </tr>
 
-      <!-- Legend for tasks -->
+      <!-- Legend for tasks (kept) -->
       <tr>
-        <td align="center" style="padding:2px 0 16px 0;">
+        <td align="center" style="padding:4px 0 10px 0;">
           <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
             <tr>
 `)
-	// Legend row with all tasks
 	for idx, name := range taskNames {
 		if idx > 0 {
-			fmt.Fprintf(buf, `              <td style="width:14px;">&nbsp;</td>
+			fmt.Fprintf(buf, `              <td style="width:12px;">&nbsp;</td>
 `)
 		}
 		fmt.Fprintf(buf, `              <td style="background:%s;width:10px;height:10px;line-height:0;font-size:0;">&nbsp;</td>
@@ -642,16 +665,16 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 
       <!-- Activity × Time (smoothed) -->
       <tr>
-        <td align="center" style="padding:8px 0 4px 0;">
+        <td align="center" style="padding:2px 0 0 0;">
           <div style="font-family:Arial, sans-serif;color:#222;font-size:14px;">Activity × Time (smoothed)</div>
         </td>
       </tr>
       <tr>
-        <td align="center" style="padding:8px 0 20px 0;">
+        <td align="center" style="padding:2px 0 16px 0;">
           <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
             <tr valign="bottom">
               <!-- Marker gutter -->
-              <td align="center" style="padding:0 8px;">
+              <td align="center" style="padding:0 6px;">
                 <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
                   <tr><td>
                     <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
@@ -660,25 +683,22 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
                     </table>
                   </td></tr>
                 </table>
-                <div style="font-family:Arial, sans-serif;font-size:11px;color:#777;padding-top:8px;">%s</div>
+                <div style="font-family:Arial, sans-serif;font-size:11px;color:#777;padding-top:6px;">%s</div>
               </td>
 `, barHeightPx, barHeightPx, esc(formatDuration(barRef)))
 
-	// bars for smoothed activity×time (color by activity ramp at day level)
 	for _, dsum := range daySummaries {
-		// compute equivalent percent for coloring (day average)
 		dayPct := 0.0
 		if dsum.TotalDuration > 0 {
 			dayPct = (float64(dsum.TotalActive) / float64(dsum.TotalDuration)) * 100.0
 		}
 		hex := colorToHex(barColorFor(dayPct))
-		// height from smoothed active-time
 		h := segHeight(dsum.SmoothedActiveTime)
 		top := 0
 		if h < barHeightPx {
 			top = barHeightPx - h
 		}
-		fmt.Fprintf(buf, `              <td align="center" style="padding:0 10px;">
+		fmt.Fprintf(buf, `              <td align="center" style="padding:0 8px;">
                 <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
                   <tr><td style="background:#e0e0e0;width:28px;height:%dpx;line-height:0;font-size:0;">
                     <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:28px;">
@@ -687,7 +707,7 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
                     </table>
                   </td></tr>
                 </table>
-                <div style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding-top:8px;">%s</div>
+                <div style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding-top:6px;">%s</div>
               </td>
 `, barHeightPx, top, hex, h, esc(weekdayShort(dsum.Date)))
 	}
@@ -704,7 +724,7 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 }
 
 /*
-Gather a list of dates from start..end inclusive (local midnights).
+Enumerate dates.
 */
 func enumerateDates(start, end time.Time) []time.Time {
 	var dates []time.Time
@@ -715,7 +735,7 @@ func enumerateDates(start, end time.Time) []time.Time {
 }
 
 /*
-Format file name "DD-MM-YYYY.jsonl" in the given directory.
+File name "DD-MM-YYYY.jsonl".
 */
 func dayFilePath(dir string, date time.Time) string {
 	return filepath.Join(dir, date.Format("02-01-2006")+".jsonl")
@@ -748,7 +768,6 @@ func buildReport(inputDir string, startDate, endDate time.Time, outPath string, 
 		}
 	}
 
-	// Order tasks (desc by total, then name)
 	for k := range totals.PerTaskTotals {
 		totals.TaskOrder = append(totals.TaskOrder, k)
 	}
@@ -761,11 +780,9 @@ func buildReport(inputDir string, startDate, endDate time.Time, outPath string, 
 		return di > dj
 	})
 
-	// Render HTML
 	var buf bytes.Buffer
-	renderHTMLReport(&buf, daySummaries, totals, barRef, 200, smooth, loc)
+	renderHTMLReport(&buf, daySummaries, totals, barRef, 200, smooth, loc, startDate, endDate)
 
-	// Write file
 	err := os.WriteFile(outPath, buf.Bytes(), 0o644)
 	if err != nil {
 		e = er.NewErrorECOL(err, "failed to write HTML report", "path", outPath)
@@ -789,8 +806,8 @@ func main() {
 	flagInputDir := flag.String("dir", "./out", "Directory with day JSONL files")
 	flagOutputPath := flag.String("output", "./out/report.html", "Path to write the HTML report")
 	flagTZ := flag.String("tz", "America/Bogota", "IANA timezone for week boundaries and display")
-	flagBarRef := flag.Duration("ref", 12*time.Minute, "Reference duration for full-height bar (N hours)")
-	flagSmooth := flag.Float64("smooth", 0.4, "Activity smoothing in [0..1], 0=linear, 1=strong smoothing")
+	flagBarRef := flag.Duration("ref", 12*time.Hour, "Reference duration for full-height bar (N hours)")
+	flagSmooth := flag.Float64("smooth", 0.4, "Activity smoothing in [0..1], 0=linear, 1=strong")
 
 	// parse and init config
 	flag.Parse()
@@ -835,12 +852,10 @@ func main() {
 
 	// Build the report
 	e := buildReport(*flagInputDir, startDate, endDate, *flagOutputPath, *flagBarRef, *flagSmooth, loc)
-	if e != nil {
-		e.QuitIf("error")
-	}
+	e.QuitIf("error")
 
-	// Open in Chrome (per your snippet)
+	// Open in Chrome
 	logger.Log(logger.Notice, logger.BoldBlueColor, "%s a file '%s' with %s", "Opening", *flagOutputPath, "google-chrome")
 	err = exec.Command("google-chrome", *flagOutputPath).Start()
-	er.QuitIfError(err, "unable to open html report with google chrome")
+	er.QuitIfError(err, "Unable to open html report with google chrome")
 }
