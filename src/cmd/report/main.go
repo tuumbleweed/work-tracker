@@ -192,7 +192,6 @@ func taskColorHex(id int, task string) string {
 	light := clamp01(band.l + lightSteps[li])
 
 	r, g, b := hslToRGB(hue/360.0, band.s, light)
-	fmt.Println(id, task, fmt.Sprintf("#%02X%02X%02X", r, g, b))
 	return fmt.Sprintf("#%02X%02X%02X", r, g, b)
 }
 
@@ -618,7 +617,7 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
       <!-- Time by Day (stacked per task) -->
       <tr>
         <td align="center" style="padding:15px 0 10px 0;">
-          <div style="font-family:Arial, sans-serif;color:#222;font-size:14px;">Time by Day (%s baseline)</div>
+          <div style="font-family:Arial, sans-serif;color:#222;font-size:14px;font-weight:bold;">Time by Day (%s baseline)</div>
         </td>
       </tr>
 
@@ -710,7 +709,7 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
       <!-- Activity × Time -->
       <tr>
         <td align="center" style="padding:15px 0 10px 0;">
-          <div style="font-family:Arial, sans-serif;color:#222;font-size:14px;">Activity × Time</div>
+          <div style="font-family:Arial, sans-serif;color:#222;font-size:14px;font-weight:bold;">Activity × Time</div>
         </td>
       </tr>
 
