@@ -57,6 +57,9 @@ type TrackerApp struct {
 }
 
 type TableRow struct {
-	Button    *widget.Button
-	TimeLabel *widget.Label
+	Button           *widget.Button
+	NameLabel        *widget.Label
+	DescriptionLabel *widget.Label
+	CreatedAtLabel   *widget.Label
+	TimeLabel        *widget.Label
 }

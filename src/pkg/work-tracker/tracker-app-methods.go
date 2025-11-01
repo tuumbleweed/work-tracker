@@ -8,6 +8,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/widget"
 
 	"work-tracker/src/pkg/logger"
 )
@@ -128,11 +129,16 @@ func (t *TrackerApp) updateInterface() {
 	timeByTask := t.TimeByTask
 	t.Mutex.Unlock()
 
+	for _, tableRow := range tableRows {
+		setRowImportance(tableRow, widget.MediumImportance)
+	}
+
+	var currentTaskNameDisplay string
 	if currentTaskName == "" {
 		if isRunning {
-			currentTaskName = "Unassigned Task"
+			currentTaskNameDisplay = "Unassigned Task"
 		} else {
-			currentTaskName = "Not Tracking"
+			currentTaskNameDisplay = "Not Tracking"
 		}
 	}
 
@@ -150,7 +156,7 @@ func (t *TrackerApp) updateInterface() {
 		t.Title.Refresh()
 		// update clock
 		t.Clock.Text = clockText
-		t.TaskLabel.Text = currentTaskName
+		t.TaskLabel.Text = currentTaskNameDisplay
 		if t.IsRunning {
 			t.Clock.Color = getActiveColor()
 			t.TaskLabel.Color = getActiveColor()
@@ -181,6 +187,10 @@ func (t *TrackerApp) updateInterface() {
 		for taskName, tableRow := range tableRows {
 			tableRow.TimeLabel.Text = formatDuration(timeByTask[taskName])
 			tableRow.TimeLabel.Refresh()
+		}
+
+		if currentTaskName != "" {
+			setRowImportance(tableRows[currentTaskName], widget.HighImportance)
 		}
 	})
 	logger.Log(logger.Verbose1, logger.GreenColor, "%s", "Updated interface")

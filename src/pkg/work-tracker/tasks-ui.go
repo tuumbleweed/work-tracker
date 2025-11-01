@@ -49,7 +49,7 @@ func (t *TrackerApp) makeTasksUI(tasks []Task) *fyne.Container {
 	rows := container.NewVBox()
 	for _, task := range tasks {
 		// left group: ▶ + Task (both fixed widths)
-		_, nameCanvas := fixedCellCenteredTruncated(task.Name, colNameWidth)
+		nameLabel, nameCanvas := fixedCellCenteredTruncated(task.Name, colNameWidth)
 		rowPlayButton, playCell := smallButton(theme.MediaPlayIcon(), nil)
 		leftBox := container.NewHBox(playCell, nameCanvas)
 
@@ -103,30 +103,34 @@ func (t *TrackerApp) makeTasksUI(tasks []Task) *fyne.Container {
 
 			// now set t.CurrentTaskName to newTaskName
 			t.Mutex.Lock()
-				t.CurrentTaskName = newTaskName
-				if !taskRunStart.IsZero() {
-					t.TaskRunStart = taskRunStart
-					// save the progress
-					maps.Copy(t.TimeByTaskBeforeStartingThisRun, t.TimeByTask)
-				}
+			t.CurrentTaskName = newTaskName
+			if !taskRunStart.IsZero() {
+				t.TaskRunStart = taskRunStart
+				// save the progress
+				maps.Copy(t.TimeByTaskBeforeStartingThisRun, t.TimeByTask)
+			}
 			t.Mutex.Unlock()
+			t.refreshState()
 			t.updateInterface() // update interface to show current task name right away
 		}
 
 		// center: Description (expands; ellipsis)
-		description := flexVCenterTruncated(task.Description)
+		descriptionLabel, descriptionCanvas := flexVCenterTruncated(task.Description)
 
 		// right group: Created + Hours (both fixed)
-		_, createdAtCanvas := fixedCellCenteredTruncated(task.CreatedAt.Format("Mon Jan 02 2006 15:04:05"), colCreatedAtWidth)
+		createdAtLabel, createdAtCanvas := fixedCellCenteredTruncated(task.CreatedAt.Format("Mon Jan 02 2006 15:04:05"), colCreatedAtWidth)
 		timeLabel, timeCanvas := fixedCellCenteredTruncated(t.TimeByTask[task.Name].String(), colHoursWidth)
-		right := container.NewHBox(createdAtCanvas, timeCanvas)
+		rightBox := container.NewHBox(createdAtCanvas, timeCanvas)
 
 		t.TableRows[task.Name] = TableRow{
-			Button:    rowPlayButton,
-			TimeLabel: timeLabel,
+			Button:           rowPlayButton,
+			NameLabel:        nameLabel,
+			DescriptionLabel: descriptionLabel,
+			CreatedAtLabel:   createdAtLabel,
+			TimeLabel:        timeLabel,
 		}
 
-		row := container.NewBorder(nil, nil, leftBox, right, description)
+		row := container.NewBorder(nil, nil, leftBox, rightBox, descriptionCanvas)
 		rows.Add(row)
 	}
 
@@ -169,7 +173,7 @@ func fixedCellCenteredTruncated(text string, w int) (label *widget.Label, canvas
 	)
 }
 
-func flexVCenterTruncated(text string) fyne.CanvasObject {
+func flexVCenterTruncated(text string) (label *widget.Label, canvas fyne.CanvasObject) {
 	l := widget.NewLabel(text)
 	l.Wrapping = fyne.TextWrapOff
 	l.Truncation = fyne.TextTruncateEllipsis
@@ -177,7 +181,7 @@ func flexVCenterTruncated(text string) fyne.CanvasObject {
 
 	v := container.NewVBox(layout.NewSpacer(), l, layout.NewSpacer())
 	// Fill all available center space in Border using StackLayout:
-	return container.New(layout.NewStackLayout(), v)
+	return l, container.New(layout.NewStackLayout(), v)
 }
 
 // tinyButton centers the icon button inside a fixed cell.
@@ -206,5 +210,18 @@ func showStopped(button *widget.Button) {
 	fyne.Do(func() {
 		button.Importance = widget.MediumImportance // Importance change needs a Refresh()
 		button.SetIcon(theme.MediaPlayIcon())       // SetIcon calls Refresh
+	})
+}
+
+func setRowImportance(tableRow TableRow, widgetImportance widget.Importance) {
+	fyne.Do(func() {
+		tableRow.NameLabel.Importance = widgetImportance
+		tableRow.DescriptionLabel.Importance = widgetImportance
+		tableRow.CreatedAtLabel.Importance = widgetImportance
+		tableRow.TimeLabel.Importance = widgetImportance
+		tableRow.NameLabel.Refresh()
+		tableRow.DescriptionLabel.Refresh()
+		tableRow.CreatedAtLabel.Refresh()
+		tableRow.TimeLabel.Refresh()
 	})
 }
