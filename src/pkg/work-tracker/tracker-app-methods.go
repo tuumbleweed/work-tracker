@@ -123,6 +123,8 @@ func (t *TrackerApp) updateInterface() {
 		activeToday := t.ActiveToday
 		lastTickActiveDuration := t.LastTickActiveDuration
 		currentTaskName := t.CurrentTaskName
+		tableRows := t.TableRows
+		timeByTask := t.TimeByTask
 	t.Mutex.Unlock()
 
 	if currentTaskName == "" {
@@ -172,6 +174,12 @@ func (t *TrackerApp) updateInterface() {
 			showStopped(t.Button)
 			// t.Button.Importance = widget.MediumImportance
 			// t.Button.SetIcon(theme.MediaPlayIcon())
+		}
+
+		// update table rows
+		for taskName, tableRow := range tableRows {
+			tableRow.TimeLabel.Text = formatDuration(timeByTask[taskName])
+			tableRow.TimeLabel.Refresh()
 		}
 	})
 	logger.Log(logger.Verbose1, logger.GreenColor, "%s", "Updated interface")

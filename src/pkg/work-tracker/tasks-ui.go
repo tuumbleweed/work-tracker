@@ -18,7 +18,7 @@ const (
 	colNameWidth        = 260
 	colDescriptionWidth = 420
 	colCreatedAtWidth   = 260
-	colHoursWidth       = 90
+	colHoursWidth       = 100
 	// single-line row height
 	rowHeight = 50
 )
