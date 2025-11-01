@@ -15,8 +15,8 @@ calculate active time for the last tick
 ```
 
 ## Work Tracker
-- Count time for each task to display in the table
-- Update table hours per each task dynamically
+- ~~Count time for each task to display in the table~~
+- ~~Update table hours per each task dynamically~~
 - Highlight the row when running a task
 - Organize UI code in a better way, currently a mess, especially button handling.
 
