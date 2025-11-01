@@ -457,9 +457,8 @@ func rangeTitle(start, end time.Time) string {
 /*
 Render the entire HTML report into a buffer.
 
-barRef  -> target duration for the reference line (e.g., 12h).
-barHeightPx -> pixel height that corresponds to barRef (line position).
-Bars can exceed barRef (container grows); the reference line keeps its absolute height from the bottom.
+barRef      -> target duration label (e.g., 12m).
+barHeightPx -> pixel height that corresponds to barRef (used to scale bars).
 */
 func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals ReportTotals, barRef time.Duration, barHeightPx int, startDate, endDate time.Time) {
 	// ---------- precompute ----------
@@ -537,6 +536,12 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 	hex75 := colorToHex(barColorFor(75))
 	hex100 := colorToHex(barColorFor(100))
 
+	// Chart geometry for centering (per-day width = bar width + left/right padding)
+	const barW = 28
+	const pad = 8
+	perDayW := barW + 2*pad
+	chartW := len(daySummaries) * perDayW // used to center the inner table
+
 	// ---------- HTML ----------
 	fmt.Fprintf(buf, `<!doctype html>
 <html>
@@ -600,27 +605,23 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 
       <!-- Time by Day (stacked per task) -->
       <tr>
-        <td align="center" style="padding:15px 0 10px 0;">
+        <td align="center" style="padding:15px 0 0 0;">
           <div style="font-family:Arial, sans-serif;color:#222;font-size:14px;">Time by Day</div>
         </td>
       </tr>
+
+      <!-- Centered chart wrapper with top-left label INSIDE (doesn't affect centering) -->
       <tr>
         <td align="center" style="padding:2px 0 0 0;">
-          <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-            <tr valign="bottom">
-              <!-- Marker gutter with horizontal N-hours line -->
-              <td align="center" style="padding:0 6px;">
-                <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-                  <tr><td>
-                    <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-                      <tr><td style="height:%dpx;line-height:0;font-size:0;">&nbsp;</td></tr>
-                      <tr><td style="height:%dpx;line-height:0;font-size:0;border-top:1px solid #cfcfcf;">&nbsp;</td></tr>
-                    </table>
-                  </td></tr>
-                </table>
-                <div style="font-family:Arial, sans-serif;font-size:11px;color:#777;padding-top:6px;">%s</div>
-              </td>
-`, maxDayRowHeight-barHeightPx, barHeightPx, esc(formatDuration(barRef)))
+          <table role="presentation" cellpadding="0" cellspacing="0" width="%d" style="border-collapse:collapse;">
+            <tr>
+              <td align="left" style="font-family:Arial, sans-serif;font-size:11px;color:#777;padding:0 0 2px 0; text-indent:-25px;">%s</td>
+            </tr>
+            <tr>
+              <td>
+                <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 auto;">
+                  <tr valign="bottom">
+`, chartW, esc(formatDuration(barRef)))
 
 	for i, dsum := range daySummaries {
 		containerH := dayContainerHeights[i]
@@ -641,15 +642,15 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 			}
 		}
 
-		fmt.Fprintf(buf, `              <!-- Day bar -->
-              <td align="center" style="padding:0 8px;">
-                <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-                  <tr><td style="background:#e0e0e0;width:28px;height:%dpx;line-height:0;font-size:0;">
-                    <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:28px;">
-`, containerH)
+		fmt.Fprintf(buf, `                    <!-- Day bar -->
+                    <td align="center" style="padding:0 %dpx;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+                        <tr><td style="background:#e0e0e0;width:%dpx;height:%dpx;line-height:0;font-size:0;">
+                          <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:%dpx;">
+`, pad, barW, containerH, barW)
 
 		if topSpacer > 0 {
-			fmt.Fprintf(buf, `                      <tr><td style="height:%dpx;line-height:0;font-size:0;">&nbsp;</td></tr>
+			fmt.Fprintf(buf, `                            <tr><td style="height:%dpx;line-height:0;font-size:0;">&nbsp;</td></tr>
 `, topSpacer)
 		}
 		for _, tname := range dayTasks {
@@ -657,26 +658,29 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 			if seg <= 0 {
 				continue
 			}
-			fmt.Fprintf(buf, `                      <tr><td style="background:%s;height:%dpx;line-height:0;font-size:0;">&nbsp;</td></tr>
+			fmt.Fprintf(buf, `                            <tr><td style="background:%s;height:%dpx;line-height:0;font-size:0;">&nbsp;</td></tr>
 `, taskColorHex(tname), seg)
 		}
 
-		fmt.Fprintf(buf, `                    </table>
-                  </td></tr>
-                </table>
-                <div style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding-top:6px;">%s</div>
-              </td>
+		fmt.Fprintf(buf, `                          </table>
+                        </td></tr>
+                      </table>
+                      <div style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding-top:6px;">%s</div>
+                    </td>
 `, esc(weekdayShort(dsum.Date)))
 	}
 
-	fmt.Fprintf(buf, `            </tr>
+	fmt.Fprintf(buf, `                  </tr>
+                </table>
+              </td>
+            </tr>
           </table>
         </td>
       </tr>
 
       <!-- Legend for tasks -->
       <tr>
-        <td align="center" style="padding:4px 0 10px 0;">
+        <td align="center" style="padding:6px 0 10px 0;">
           <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
             <tr>
 `)
@@ -694,29 +698,25 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
         </td>
       </tr>
 
-      <!-- Activity × Time (smoothed) -->
+      <!-- Activity × Time -->
       <tr>
-        <td align="center" style="padding:15px 0 10px 0;">
-          <div style="font-family:Arial, sans-serif;color:#222;font-size:14px;">Activity × Time (smoothed)</div>
+        <td align="center" style="padding:15px 0 0 0;">
+          <div style="font-family:Arial, sans-serif;color:#222;font-size:14px;">Activity × Time</div>
         </td>
       </tr>
+
+      <!-- Centered chart wrapper with top-left label for the smoothed chart -->
       <tr>
         <td align="center" style="padding:2px 0 6px 0;">
-          <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-            <tr valign="bottom">
-              <!-- Marker gutter -->
-              <td align="center" style="padding:0 6px;">
-                <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-                  <tr><td>
-                    <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-                      <tr><td style="height:%dpx;line-height:0;font-size:0;">&nbsp;</td></tr>
-                      <tr><td style="height:%dpx;line-height:0;font-size:0;border-top:1px solid #cfcfcf;">&nbsp;</td></tr>
-                    </table>
-                  </td></tr>
-                </table>
-                <div style="font-family:Arial, sans-serif;font-size:11px;color:#777;padding-top:6px;">%s</div>
-              </td>
-`, maxSmRowHeight-barHeightPx, barHeightPx, esc(formatDuration(barRef)))
+          <table role="presentation" cellpadding="0" cellspacing="0" width="%d" style="border-collapse:collapse;">
+            <tr>
+              <td align="left" style="font-family:Arial, sans-serif;font-size:11px;color:#777;padding:0 0 2px 0; text-indent:-25px;">%s</td>
+            </tr>
+            <tr>
+              <td>
+                <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 auto;">
+                  <tr valign="bottom">
+`, chartW, esc(formatDuration(barRef)))
 
 	for i, dsum := range daySummaries {
 		dayPct := 0.0
@@ -735,21 +735,24 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 			top = 0
 		}
 
-		fmt.Fprintf(buf, `              <td align="center" style="padding:0 8px;">
-                <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-                  <tr><td style="background:#e0e0e0;width:28px;height:%dpx;line-height:0;font-size:0;">
-                    <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:28px;">
-                      <tr><td style="height:%dpx;line-height:0;font-size:0;">&nbsp;</td></tr>
-                      <tr><td style="background:%s;height:%dpx;line-height:0;font-size:0;">&nbsp;</td></tr>
-                    </table>
-                  </td></tr>
-                </table>
-                <div style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding-top:6px;">%s</div>
-              </td>
-`, containerH, top, hex, h, esc(weekdayShort(dsum.Date)))
+		fmt.Fprintf(buf, `                    <td align="center" style="padding:0 %dpx;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+                        <tr><td style="background:#e0e0e0;width:%dpx;height:%dpx;line-height:0;font-size:0;">
+                          <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:%dpx;">
+                            <tr><td style="height:%dpx;line-height:0;font-size:0;">&nbsp;</td></tr>
+                            <tr><td style="background:%s;height:%dpx;line-height:0;font-size:0;">&nbsp;</td></tr>
+                          </table>
+                        </td></tr>
+                      </table>
+                      <div style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding-top:6px;">%s</div>
+                    </td>
+`, pad, barW, containerH, barW, top, hex, h, esc(weekdayShort(dsum.Date)))
 	}
 
-	fmt.Fprintf(buf, `            </tr>
+	fmt.Fprintf(buf, `                  </tr>
+                </table>
+              </td>
+            </tr>
           </table>
         </td>
       </tr>
@@ -815,7 +818,7 @@ func dayFilePath(dir string, date time.Time) string {
 /*
 Build the report: read files, aggregate, render HTML, write to disk.
 */
-func buildReport(inputDir string, startDate, endDate time.Time, outPath string, barRef time.Duration, smooth float64, loc *time.Location) (e *er.Error) {
+func buildReport(inputDir string, startDate, endDate time.Time, outPath string, barRef time.Duration, smooth float64) (e *er.Error) {
 	logger.Log(logger.Notice, logger.BlueColor, "%s files from '%s' for '%s'..'%s'", "Reading", inputDir, startDate.Format("02-01-2006"), endDate.Format("02-01-2006"))
 
 	dates := enumerateDates(startDate, endDate)
@@ -922,7 +925,7 @@ func main() {
 	}
 
 	// Build the report
-	e := buildReport(*flagInputDir, startDate, endDate, *flagOutputPath, *flagBarRef, *flagSmooth, loc)
+	e := buildReport(*flagInputDir, startDate, endDate, *flagOutputPath, *flagBarRef, *flagSmooth)
 	e.QuitIf("error")
 
 	// Open in Chrome
