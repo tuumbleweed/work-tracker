@@ -29,7 +29,7 @@ func initializeInterface(appId, windowTitle string) (t *TrackerApp, e *er.Error)
 
 	// Start large + fullscreen
 	t.Window = t.App.NewWindow(windowTitle)
-	t.Window.Resize(fyne.NewSize(1920, 1080))   // initial size (before FS)
+	t.Window.Resize(fyne.NewSize(1280, 720))   // initial size (before FS)
 	// t.Window.SetFullScreen(true)               // launch fullscreen
 
 	// title widget

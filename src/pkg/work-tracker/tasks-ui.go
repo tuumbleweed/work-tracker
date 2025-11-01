@@ -2,6 +2,7 @@ package worktracker
 
 import (
 	"image/color"
+	"work-tracker/src/pkg/logger"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -45,11 +46,62 @@ func (t *TrackerApp) makeTasksUI(tasks []Task) *fyne.Container {
 	rows := container.NewVBox()
 	for _, task := range tasks {
 		// left group: ▶ + Task (both fixed widths)
-		playButton := smallButton(theme.MediaPlayIcon(), t.onButtonTapped, colPlayButtonWidth, rowHeight)
+		rowPlayButton, playCell := smallButton(theme.MediaPlayIcon(), nil)
 		leftBox := container.NewHBox(
-			playButton,
+			playCell,
 			fixedCellCenteredTruncated(task.Name, colNameWidth),
 		)
+		rowPlayButton.OnTapped = func() {
+			// t.onButtonTapped(false) // we did not flip the switch yet, so t.IsRunning remains the same
+
+			t.Mutex.Lock()
+				isRunning := t.IsRunning
+				allTableButtonTaskPairs := t.TableButtons
+				previousTaskName := t.CurrentTaskName
+			t.Mutex.Unlock()
+			var newTaskName string = task.Name
+
+			if isRunning {
+				// it's running which means we either stop it or start another one
+
+				// first showStopped all the buttons
+
+				// if previous task name NOT equal to the new one - keep running,
+				// then showRunning the playButton
+				// if previous task name IS equal to the new one - flipSwitch (onButtonTapped)
+
+				// we can first showStopped all of the buttons
+				for _, buttonTaskPair := range allTableButtonTaskPairs {
+					// fmt.Println(buttonTaskPair.TaskName)
+					showStopped(buttonTaskPair.Button)
+				}
+				// then handle the differences
+				if previousTaskName != newTaskName {
+					showRunning(rowPlayButton)
+					newTaskName = task.Name
+					logger.Log(logger.Info, logger.CyanColor, "%s. Previous: '%s', New: '%s'", "Switching tasks", previousTaskName, newTaskName)
+				} else {
+					t.onButtonTapped()
+					newTaskName = "" // reset newTaskName on stopping
+					logger.Log(logger.Info, logger.CyanColor, "%s. Previous: '%s', New: '%s'", "Stopping task", previousTaskName, newTaskName)
+				}
+			} else {
+				// it's not running which means we are starting a new task
+
+				// flip the switch then show running
+
+				t.onButtonTapped()
+				showRunning(rowPlayButton)
+				newTaskName = task.Name
+				logger.Log(logger.Info, logger.CyanColor, "%s. Previous: '%s', New: '%s'", "Startng new task", previousTaskName, newTaskName)
+			}
+
+			// now set t.CurrentTaskName to newTaskName
+			t.Mutex.Lock()
+				t.CurrentTaskName = newTaskName
+			t.Mutex.Unlock()
+		}
+		t.TableButtons = append(t.TableButtons, ButtonTaskPair{TaskName: task.Name, Button: rowPlayButton})
 
 		// center: Description (expands; ellipsis)
 		description := flexVCenterTruncated(task.Description)
@@ -115,14 +167,30 @@ func flexVCenterTruncated(text string) fyne.CanvasObject {
 }
 
 // tinyButton centers the icon button inside a fixed cell.
-func smallButton(icon fyne.Resource, onTap func(), width, height float32) fyne.CanvasObject {
+// Return both: the actual button (to mutate later) and the wrapped cell for layout.
+func smallButton(icon fyne.Resource, onTap func()) (*widget.Button, fyne.CanvasObject) {
 	btn := widget.NewButtonWithIcon("", icon, onTap)
-	// Optional: make it visually lighter
-	// btn.Importance = widget.LowImportance
 
 	centered := container.NewCenter(btn)
-	return container.New(
-		layout.NewGridWrapLayout(fyne.NewSize(width, height)),
-		centered, // centered inside the play button cell
+	cell := container.New(
+		layout.NewGridWrapLayout(fyne.NewSize(colPlayButtonWidth, rowHeight)),
+		centered,
 	)
+	return btn, cell
+}
+
+// button becomes orange, pause icon displayed
+func showRunning(button *widget.Button) {
+	fyne.Do(func() {
+		button.Importance = widget.WarningImportance // Importance change needs a Refresh()
+		button.SetIcon(theme.MediaPauseIcon()) // SetIcon calls Refresh
+	})
+}
+
+// button becomes grey, play icon displayed
+func showStopped(button *widget.Button) {
+	fyne.Do(func() {
+		button.Importance = widget.MediumImportance // Importance change needs a Refresh()
+		button.SetIcon(theme.MediaPlayIcon()) // SetIcon calls Refresh
+	})
 }

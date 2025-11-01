@@ -19,6 +19,7 @@ type TrackerApp struct {
 	AverageActivityBar *ActivityBar
 	CurrentActivityBar *ActivityBar
 	Button             *widget.Button
+	TableButtons       []ButtonTaskPair
 	TasksContainer     *fyne.Container
 
 	// tickers
@@ -44,8 +45,14 @@ type TrackerApp struct {
 	Mutex sync.Mutex
 
 	// run info
-	IsRunning     bool
-	RunStart      time.Time // when last pressed "start" button
-	ChunkStart    time.Time // when last time chunk was saved
-	LastTickStart time.Time // when last tick has started
+	IsRunning       bool
+	RunStart        time.Time // when last pressed "start" button
+	ChunkStart      time.Time // when last time chunk was saved
+	LastTickStart   time.Time // when last tick has started
+	CurrentTaskName string    // which task is running right now, can be empty
+}
+
+type ButtonTaskPair struct {
+	TaskName string
+	Button   *widget.Button
 }

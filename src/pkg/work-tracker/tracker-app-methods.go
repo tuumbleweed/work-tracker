@@ -7,7 +7,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
-	"fyne.io/fyne/v2/widget"
+	// "fyne.io/fyne/v2/widget"
 
 	"work-tracker/src/pkg/logger"
 )
@@ -16,7 +16,23 @@ func (t *TrackerApp) Start() {
 	logger.Log(logger.Notice, logger.BoldBlueColor, "%s", "Running work tracker app...")
 
 	// set functions
-	t.Button.OnTapped = t.onButtonTapped
+	t.Button.OnTapped = func() {
+		t.onButtonTapped()
+		// when main button stopped - showStopped all the buttons
+		t.Mutex.Lock()
+			allTableButtonTaskPairs := t.TableButtons
+			currentTaskName := t.CurrentTaskName
+			isRunning := t.IsRunning
+		t.Mutex.Unlock()
+		if !isRunning {
+			for _, buttonTaskPair := range allTableButtonTaskPairs {
+				showStopped(buttonTaskPair.Button)
+			}
+			logger.Log(logger.Info, logger.CyanColor, "%s. Task name: '%s'", "Stopping task", currentTaskName)
+		} else {
+			logger.Log(logger.Info, logger.CyanColor, "%s. Task name: '%s'", "Starting task", currentTaskName)
+		}
+	}
 	t.Window.SetCloseIntercept(t.onClose)
 
 	t.setContent()
@@ -133,14 +149,14 @@ func (t *TrackerApp) updateInterface() {
 		// update button
 		if isRunning {
 			t.Button.SetText("Stop")
-			t.Button.SetIcon(theme.MediaPauseIcon())
-			t.Button.Importance = widget.WarningImportance
-			t.Button.Refresh()
+			showRunning(t.Button)
+			// t.Button.Importance = widget.WarningImportance // Importance change needs a Refresh()
+			// t.Button.SetIcon(theme.MediaPauseIcon()) // SetIcon calls Refresh
 		} else {
 			t.Button.SetText("Start")
-			t.Button.SetIcon(theme.MediaPlayIcon())
-			t.Button.Importance = widget.MediumImportance
-			t.Button.Refresh()
+			showStopped(t.Button)
+			// t.Button.Importance = widget.MediumImportance
+			// t.Button.SetIcon(theme.MediaPlayIcon())
 		}
 	})
 	logger.Log(logger.Verbose1, logger.GreenColor, "%s", "Updated interface")
@@ -202,13 +218,14 @@ func (t *TrackerApp) flipSwitch() {
 		now := time.Now()
 		t.RunStart = now
 		t.ChunkStart = now
-		} else {
+	} else {
 		// stopping
 		t.IsRunning = false
 		t.LastTickActiveDuration = 0 // empty this to show 0% when idle
 		// set new t.WorkedTodayBeforeStartingThisRun
 		t.WorkedTodayBeforeStartingThisRun = t.WorkedToday
 	}
+	t.CurrentTaskName = "" // set to empty here, can be overriden later
 	t.Mutex.Unlock()
 	logger.Log(logger.Verbose1, logger.GreenColor, "%s", "Flipped switch")
 }
