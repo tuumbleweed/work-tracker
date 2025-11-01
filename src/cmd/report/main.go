@@ -756,7 +756,7 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 
       <!-- Activity × Time legend -->
       <tr>
-        <td align="center" style="padding:2px 0 1px 0;">
+        <td align="center" style="padding:2px 0 10px 0;">
           <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
             <tr>
               <td style="background:%s;width:10px;height:10px;line-height:0;font-size:0;">&nbsp;</td>
