@@ -7,6 +7,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/widget"
 
 	"work-tracker/src/pkg/logger"
 )
@@ -133,9 +134,13 @@ func (t *TrackerApp) updateInterface() {
 		if isRunning {
 			t.Button.SetText("Stop")
 			t.Button.SetIcon(theme.MediaPauseIcon())
+			t.Button.Importance = widget.WarningImportance
+			t.Button.Refresh()
 		} else {
 			t.Button.SetText("Start")
 			t.Button.SetIcon(theme.MediaPlayIcon())
+			t.Button.Importance = widget.HighImportance
+			t.Button.Refresh()
 		}
 	})
 	logger.Log(logger.Verbose1, logger.GreenColor, "%s", "Updated interface")
