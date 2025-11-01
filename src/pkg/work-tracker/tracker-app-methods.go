@@ -52,6 +52,8 @@ func (t *TrackerApp) setContent() {
 		vgap(1, 10),
 		t.Title,
 		vgap(1, 10),
+		t.TaskLabel,
+		vgap(1, 10),
 		t.Clock,
 		vgap(1, 5),
 		t.AverageActivityBar,
@@ -116,11 +118,20 @@ func (t *TrackerApp) updateInterface() {
 
 	// get the data
 	t.Mutex.Lock()
-	isRunning := t.IsRunning
-	workedToday := t.WorkedToday
-	activeToday := t.ActiveToday
-	lastTickActiveDuration := t.LastTickActiveDuration
+		isRunning := t.IsRunning
+		workedToday := t.WorkedToday
+		activeToday := t.ActiveToday
+		lastTickActiveDuration := t.LastTickActiveDuration
+		currentTaskName := t.CurrentTaskName
 	t.Mutex.Unlock()
+
+	if currentTaskName == "" {
+		if isRunning {
+			currentTaskName = "Unassigned Task"
+		} else {
+			currentTaskName = "Not Tracking"
+		}
+	}
 
 	activeToday = Clamp(activeToday, 0, workedToday)
 	todayAverageActivityPercentage := getActivityPercentage(activeToday, workedToday)
@@ -136,12 +147,16 @@ func (t *TrackerApp) updateInterface() {
 		t.Title.Refresh()
 		// update clock
 		t.Clock.Text = clockText
+		t.TaskLabel.Text = currentTaskName
 		if t.IsRunning {
 			t.Clock.Color = getActiveColor()
+			t.TaskLabel.Color = getActiveColor()
 		} else {
 			t.Clock.Color = theme.Color(theme.ColorNameForeground) // revert to default theme color
+			t.TaskLabel.Color = theme.Color(theme.ColorNameForeground) // revert to default theme color
 		}
 		t.Clock.Refresh()
+		t.TaskLabel.Refresh()
 		// update activity bars
 		t.AverageActivityBar.SetPercent(todayAverageActivityPercentage)
 		t.CurrentActivityBar.SetPercent(lastTickActivityPercentage)

@@ -15,6 +15,7 @@ type TrackerApp struct {
 
 	// UI elements
 	Title              *canvas.Text
+	TaskLabel          *canvas.Text
 	Clock              *canvas.Text
 	AverageActivityBar *ActivityBar
 	CurrentActivityBar *ActivityBar

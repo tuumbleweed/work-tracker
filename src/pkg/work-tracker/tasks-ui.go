@@ -100,6 +100,7 @@ func (t *TrackerApp) makeTasksUI(tasks []Task) *fyne.Container {
 			t.Mutex.Lock()
 				t.CurrentTaskName = newTaskName
 			t.Mutex.Unlock()
+			t.updateInterface() // update interface to show current task name right away
 		}
 		t.TableButtons = append(t.TableButtons, ButtonTaskPair{TaskName: task.Name, Button: rowPlayButton})
 
