@@ -159,6 +159,7 @@ type hueBand struct {
 }
 
 var paletteBands = []hueBand{
+	{0, 360, 0.00, 0.60},   // gray
 	{210, 230, 0.70, 0.52}, // blue
 	{35, 45, 0.85, 0.50},   // amber
 	{95, 110, 0.70, 0.48},  // lime
@@ -191,6 +192,7 @@ func taskColorHex(id int, task string) string {
 	light := clamp01(band.l + lightSteps[li])
 
 	r, g, b := hslToRGB(hue/360.0, band.s, light)
+	fmt.Println(id, task, fmt.Sprintf("#%02X%02X%02X", r, g, b))
 	return fmt.Sprintf("#%02X%02X%02X", r, g, b)
 }
 
@@ -516,8 +518,18 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 		taskNames = append(taskNames, k)
 	}
 	sort.Slice(taskNames, func(i, j int) bool {
-		di := totals.PerTaskTotals[taskNames[i]]
-		dj := totals.PerTaskTotals[taskNames[j]]
+		// pin "Unassigned Time" to the top
+		ai, aj := taskNames[i], taskNames[j]
+		if ai == "Unassigned Time" && aj != "Unassigned Time" {
+			return true
+		}
+		if aj == "Unassigned Time" && ai != "Unassigned Time" {
+			return false
+		}
+
+		// sort other cases
+		di := totals.PerTaskTotals[ai]
+		dj := totals.PerTaskTotals[aj]
 		if di == dj {
 			return taskNames[i] < taskNames[j]
 		}
@@ -856,7 +868,7 @@ func buildReport(inputDir string, startDate, endDate time.Time, outPath string, 
 		e = er.NewErrorECOL(err, "failed to write HTML report", "path", outPath)
 		return e
 	}
-	logger.Log(logger.Notice, logger.GreenColor, "%s report to '%s' (%s, %d days)", "Wrote", outPath, formatDuration(totals.TotalWorked), len(daySummaries))
+	logger.Log(logger.Notice, logger.GreenColor, "%s report to '%s' (%s, %s days)", "Wrote", outPath, formatDuration(totals.TotalWorked), len(daySummaries))
 	return nil
 }
 
