@@ -126,9 +126,9 @@ Activity color ramp: 0%→red, 50%→yellow, 75%→green, 100%→greenPeak (your
 We return #RRGGBB for HTML.
 */
 func barColorFor(p float64) color.Color {
-	red := color.NRGBA{R: 220, G: 60, B: 60, A: 255}     // 0%
-	yellow := color.NRGBA{R: 235, G: 190, B: 50, A: 255} // 50%
-	green := color.NRGBA{R: 60, G: 180, B: 90, A: 255}   // 75%
+	red := color.NRGBA{R: 220, G: 60, B: 60, A: 255}       // 0%
+	yellow := color.NRGBA{R: 235, G: 190, B: 50, A: 255}   // 50%
+	green := color.NRGBA{R: 60, G: 180, B: 90, A: 255}     // 75%
 	greenPeak := color.NRGBA{R: 20, G: 180, B: 45, A: 255} // 100%
 
 	t := clamp01(p / 100.0)
@@ -150,13 +150,6 @@ func colorToHex(c color.Color) string {
 /*
 Categorical palette with wide-separated hue bands (12+ families).
 Mapping is deterministic per task name, but ensures bands differ a lot.
-
-We pick:
-- blue(210–230), indigo(235–255), cyan(190–205), teal(170–185),
-- green(120–135), lime(95–110), yellow(50–60), amber(35–45),
-- orange(20–30), pink(335–350), magenta(310–330), purple(270–290).
-
-Inside a band we vary hue and lightness a little using extra hash bits.
 */
 type hueBand struct {
 	hMin float64
@@ -172,7 +165,7 @@ var paletteBands = []hueBand{
 	{170, 185, 0.65, 0.50}, // teal
 	{120, 135, 0.65, 0.50}, // green
 	{95, 110, 0.70, 0.48},  // lime
-	{50, 60, 0.90, 0.46},   // yellow (bit darker for contrast)
+	{50, 60, 0.90, 0.46},   // yellow
 	{35, 45, 0.85, 0.50},   // amber
 	{20, 30, 0.80, 0.50},   // orange
 	{335, 350, 0.65, 0.52}, // pink
@@ -192,7 +185,7 @@ func taskColorHex(task string) string {
 	inner := float64((hash>>8)%1000) / 1000.0 // 0..1
 	hue := band.hMin + inner*(band.hMax-band.hMin)
 
-	// vary lightness slightly across 3 steps for more distincts per band
+	// vary lightness slightly across 3 steps
 	lightSteps := []float64{-0.07, 0.0, +0.06}
 	li := int((hash>>18)%uint32(len(lightSteps)))
 	light := clamp01(band.l + lightSteps[li])
@@ -240,8 +233,6 @@ func hue2rgb(p, q, t float64) float64 {
 
 /*
 Smooth activity factor f∈[0,1] by exponent α = 1 - smooth (smooth∈[0,1]).
-- smooth=0.0 => α=1 => linear (no smoothing).
-- smooth=1.0 => α≈0.2 (clamped) => strong compression.
 */
 func smoothFactor(f, smooth float64) float64 {
 	if f <= 0 {
@@ -278,7 +269,7 @@ func formatDuration(d time.Duration) string {
 	if m > 0 {
 		fmt.Fprintf(out, "%dm ", m)
 	}
-	if s > 0 && h == 0 { // suppress seconds if hours present
+	if s > 0 && h == 0 {
 		fmt.Fprintf(out, "%ds", s)
 	}
 	return strings.TrimSpace(out.String())
@@ -325,7 +316,6 @@ func readDayFile(filePath string, date time.Time, smooth float64) (sum DaySummar
 	_, statErr := os.Stat(filePath)
 	if statErr != nil {
 		if os.IsNotExist(statErr) {
-			// Missing day file: treat as zero-day, not an error.
 			logger.Log(logger.Notice, logger.CyanColor, "%s missing day file '%s' (treated as 0)", "Skipping", filePath)
 			return sum, nil
 		}
@@ -378,7 +368,6 @@ func readDayFile(filePath string, date time.Time, smooth float64) (sum DaySummar
 		}
 		sum.TaskDurations[task] += dur
 
-		// smoothed contribution
 		ratio := 0.0
 		if dur > 0 {
 			ratio = float64(active) / float64(dur)
@@ -450,7 +439,7 @@ func esc(s string) string {
 }
 
 /*
-Format "Weekly Report — 25 Oct 2025 – 31 Oct 2025" (compact when same month/year).
+Format "Weekly Report — 25 Oct 2025 – 31 Oct 2025".
 */
 func rangeTitle(start, end time.Time) string {
 	if start.Equal(end) {
@@ -467,13 +456,62 @@ func rangeTitle(start, end time.Time) string {
 
 /*
 Render the entire HTML report into a buffer.
-- barRef is the "N hours" reference height target (e.g., 12h).
-- barHeightPx is the pixel height used for that reference.
-*/
-func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals ReportTotals, barRef time.Duration, barHeightPx int, smooth float64, loc *time.Location, startDate, endDate time.Time) {
-	// ---------- precompute ----------
-	pxPerSecond := float64(barHeightPx) / barRef.Seconds()
 
+barRef  -> target duration for the reference line (e.g., 12h).
+barHeightPx -> pixel height that corresponds to barRef (line position).
+Bars can exceed barRef (container grows); the reference line keeps its absolute height from the bottom.
+*/
+func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals ReportTotals, barRef time.Duration, barHeightPx int, startDate, endDate time.Time) {
+	// ---------- precompute ----------
+	refSeconds := barRef.Seconds()
+	if refSeconds <= 0 {
+		refSeconds = 1 // avoid div-by-zero; degenerate but safe
+	}
+	pxPerSecond := float64(barHeightPx) / refSeconds
+
+	// helper: convert a duration to pixel height (at least 1px if positive)
+	segHeight := func(d time.Duration) int {
+		if d <= 0 {
+			return 0
+		}
+		h := int(math.Round(d.Seconds() * pxPerSecond))
+		if h == 0 {
+			h = 1
+		}
+		return h
+	}
+
+	// Precompute per-day container heights and row max for "Time by Day"
+	dayContainerHeights := make([]int, len(daySummaries))
+	maxDayRowHeight := barHeightPx
+	for i, ds := range daySummaries {
+		h := segHeight(ds.TotalDuration)
+		container := h
+		if container < barHeightPx {
+			container = barHeightPx
+		}
+		dayContainerHeights[i] = container
+		if container > maxDayRowHeight {
+			maxDayRowHeight = container
+		}
+	}
+
+	// Precompute per-day container heights and row max for "Activity×Time"
+	smContainerHeights := make([]int, len(daySummaries))
+	maxSmRowHeight := barHeightPx
+	for i, ds := range daySummaries {
+		h := segHeight(ds.SmoothedActiveTime)
+		container := h
+		if container < barHeightPx {
+			container = barHeightPx
+		}
+		smContainerHeights[i] = container
+		if container > maxSmRowHeight {
+			maxSmRowHeight = container
+		}
+	}
+
+	// task listing (sorted by total desc)
 	taskNames := make([]string, 0, len(totals.PerTaskTotals))
 	for k := range totals.PerTaskTotals {
 		taskNames = append(taskNames, k)
@@ -492,25 +530,6 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 		avgActivity = (float64(totals.TotalActive) / float64(totals.TotalWorked)) * 100.0
 	}
 	activityHex := colorToHex(barColorFor(avgActivity))
-
-	// helpers
-	segHeight := func(d time.Duration) int {
-		if d <= 0 {
-			return 0
-		}
-		h := int(math.Round(float64(d.Seconds()) * pxPerSecond))
-		if h == 0 {
-			h = 1
-		}
-		return h
-	}
-	spacerHeight := func(dayTotal time.Duration) int {
-		h := segHeight(dayTotal)
-		if h >= barHeightPx {
-			return 0
-		}
-		return barHeightPx - h
-	}
 
 	// ---------- HTML ----------
 	fmt.Fprintf(buf, `<!doctype html>
@@ -553,7 +572,6 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
           <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
 `, rangeTitle(startDate, endDate), rangeTitle(startDate, endDate), formatDuration(totals.TotalWorked), buildRadialProgressSVG(96, 10, avgActivity, activityHex))
 
-	// vertical list: one item per row
 	for _, name := range taskNames {
 		dur := totals.PerTaskTotals[name]
 		c := taskColorHex(name)
@@ -576,7 +594,7 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 
       <!-- Time by Day (stacked per task) -->
       <tr>
-        <td align="center" style="padding:2px 0 0 0;">
+        <td align="center" style="padding:15px 0 10px 0;">
           <div style="font-family:Arial, sans-serif;color:#222;font-size:14px;">Time by Day</div>
         </td>
       </tr>
@@ -584,40 +602,46 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
         <td align="center" style="padding:2px 0 0 0;">
           <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
             <tr valign="bottom">
-`)
-
-	// Marker gutter column with reference line (tighter)
-	fmt.Fprintf(buf, `              <!-- Marker gutter -->
+              <!-- Marker gutter with horizontal N-hours line -->
               <td align="center" style="padding:0 6px;">
                 <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
                   <tr><td>
                     <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-                      <tr><td style="height:%dpx;line-height:0;font-size:0;border-bottom:1px solid #cfcfcf;">&nbsp;</td></tr>
                       <tr><td style="height:%dpx;line-height:0;font-size:0;">&nbsp;</td></tr>
+                      <tr><td style="height:%dpx;line-height:0;font-size:0;border-top:1px solid #cfcfcf;">&nbsp;</td></tr>
                     </table>
                   </td></tr>
                 </table>
                 <div style="font-family:Arial, sans-serif;font-size:11px;color:#777;padding-top:6px;">%s</div>
               </td>
-`, barHeightPx, barHeightPx, esc(formatDuration(barRef)))
+`, maxDayRowHeight-barHeightPx, barHeightPx, esc(formatDuration(barRef)))
 
 	// Bars for each day
-	for _, dsum := range daySummaries {
-		// per-day order from global; skip zeros
+	for i, dsum := range daySummaries {
+		containerH := dayContainerHeights[i]
+		dayTotalH := segHeight(dsum.TotalDuration)
+		if dayTotalH > containerH {
+			dayTotalH = containerH // safety (shouldn't happen)
+		}
+		topSpacer := containerH - dayTotalH
+		if topSpacer < 0 {
+			topSpacer = 0
+		}
+
+		// order tasks by global order, include only present tasks
 		dayTasks := make([]string, 0, len(taskNames))
 		for _, tname := range taskNames {
 			if dsum.TaskDurations[tname] > 0 {
 				dayTasks = append(dayTasks, tname)
 			}
 		}
-		topSpacer := spacerHeight(dsum.TotalDuration)
 
 		fmt.Fprintf(buf, `              <!-- Day bar -->
               <td align="center" style="padding:0 8px;">
                 <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
                   <tr><td style="background:#e0e0e0;width:28px;height:%dpx;line-height:0;font-size:0;">
                     <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:28px;">
-`, barHeightPx)
+`, containerH)
 
 		if topSpacer > 0 {
 			fmt.Fprintf(buf, `                      <tr><td style="height:%dpx;line-height:0;font-size:0;">&nbsp;</td></tr>
@@ -631,6 +655,7 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 			fmt.Fprintf(buf, `                      <tr><td style="background:%s;height:%dpx;line-height:0;font-size:0;">&nbsp;</td></tr>
 `, taskColorHex(tname), seg)
 		}
+
 		fmt.Fprintf(buf, `                    </table>
                   </td></tr>
                 </table>
@@ -638,12 +663,13 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
               </td>
 `, esc(weekdayShort(dsum.Date)))
 	}
+
 	fmt.Fprintf(buf, `            </tr>
           </table>
         </td>
       </tr>
 
-      <!-- Legend for tasks (kept) -->
+      <!-- Legend for tasks -->
       <tr>
         <td align="center" style="padding:4px 0 10px 0;">
           <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
@@ -665,7 +691,7 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 
       <!-- Activity × Time (smoothed) -->
       <tr>
-        <td align="center" style="padding:2px 0 0 0;">
+        <td align="center" style="padding:15px 0 10px 0;">
           <div style="font-family:Arial, sans-serif;color:#222;font-size:14px;">Activity × Time (smoothed)</div>
         </td>
       </tr>
@@ -678,26 +704,32 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
                 <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
                   <tr><td>
                     <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-                      <tr><td style="height:%dpx;line-height:0;font-size:0;border-bottom:1px solid #cfcfcf;">&nbsp;</td></tr>
                       <tr><td style="height:%dpx;line-height:0;font-size:0;">&nbsp;</td></tr>
+                      <tr><td style="height:%dpx;line-height:0;font-size:0;border-top:1px solid #cfcfcf;">&nbsp;</td></tr>
                     </table>
                   </td></tr>
                 </table>
                 <div style="font-family:Arial, sans-serif;font-size:11px;color:#777;padding-top:6px;">%s</div>
               </td>
-`, barHeightPx, barHeightPx, esc(formatDuration(barRef)))
+`, maxSmRowHeight-barHeightPx, barHeightPx, esc(formatDuration(barRef)))
 
-	for _, dsum := range daySummaries {
+	for i, dsum := range daySummaries {
 		dayPct := 0.0
 		if dsum.TotalDuration > 0 {
 			dayPct = (float64(dsum.TotalActive) / float64(dsum.TotalDuration)) * 100.0
 		}
 		hex := colorToHex(barColorFor(dayPct))
+
+		containerH := smContainerHeights[i]
 		h := segHeight(dsum.SmoothedActiveTime)
-		top := 0
-		if h < barHeightPx {
-			top = barHeightPx - h
+		if h > containerH {
+			h = containerH
 		}
+		top := containerH - h
+		if top < 0 {
+			top = 0
+		}
+
 		fmt.Fprintf(buf, `              <td align="center" style="padding:0 8px;">
                 <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
                   <tr><td style="background:#e0e0e0;width:28px;height:%dpx;line-height:0;font-size:0;">
@@ -709,7 +741,7 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
                 </table>
                 <div style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding-top:6px;">%s</div>
               </td>
-`, barHeightPx, top, hex, h, esc(weekdayShort(dsum.Date)))
+`, containerH, top, hex, h, esc(weekdayShort(dsum.Date)))
 	}
 
 	fmt.Fprintf(buf, `            </tr>
@@ -781,7 +813,7 @@ func buildReport(inputDir string, startDate, endDate time.Time, outPath string, 
 	})
 
 	var buf bytes.Buffer
-	renderHTMLReport(&buf, daySummaries, totals, barRef, 200, smooth, loc, startDate, endDate)
+	renderHTMLReport(&buf, daySummaries, totals, barRef, 200, startDate, endDate)
 
 	err := os.WriteFile(outPath, buf.Bytes(), 0o644)
 	if err != nil {
@@ -806,7 +838,7 @@ func main() {
 	flagInputDir := flag.String("dir", "./out", "Directory with day JSONL files")
 	flagOutputPath := flag.String("output", "./out/report.html", "Path to write the HTML report")
 	flagTZ := flag.String("tz", "America/Bogota", "IANA timezone for week boundaries and display")
-	flagBarRef := flag.Duration("ref", 12*time.Hour, "Reference duration for full-height bar (N hours)")
+	flagBarRef := flag.Duration("ref", 12*time.Minute, "Reference duration for the horizontal marker line (N hours)")
 	flagSmooth := flag.Float64("smooth", 0.4, "Activity smoothing in [0..1], 0=linear, 1=strong")
 
 	// parse and init config
