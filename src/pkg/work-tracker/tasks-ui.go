@@ -2,6 +2,8 @@ package worktracker
 
 import (
 	"image/color"
+	"maps"
+	"time"
 	"work-tracker/src/pkg/logger"
 
 	"fyne.io/fyne/v2"
@@ -59,6 +61,7 @@ func (t *TrackerApp) makeTasksUI(tasks []Task) *fyne.Container {
 			previousTaskName := t.CurrentTaskName
 			t.Mutex.Unlock()
 			var newTaskName string = task.Name
+			var taskRunStart time.Time
 
 			if isRunning {
 				// it's running which means we either stop it or start another one
@@ -76,8 +79,12 @@ func (t *TrackerApp) makeTasksUI(tasks []Task) *fyne.Container {
 				// then handle the differences
 				if previousTaskName != newTaskName {
 					showRunning(rowPlayButton)
+
+					// make sure to update t.TaskRunStart so that new task does not receive additional time
+					taskRunStart = time.Now()
 					newTaskName = task.Name
-					logger.Log(logger.Info, logger.CyanColor, "%s. Previous: '%s', New: '%s'", "Switching tasks", previousTaskName, newTaskName)
+
+					logger.Log(logger.Info, logger.CyanColor, "%s at %s. Previous: '%s', New: '%s'", "Switching tasks", taskRunStart.String(), previousTaskName, newTaskName)
 				} else {
 					t.onButtonTapped()
 					newTaskName = "" // reset newTaskName on stopping
@@ -96,7 +103,12 @@ func (t *TrackerApp) makeTasksUI(tasks []Task) *fyne.Container {
 
 			// now set t.CurrentTaskName to newTaskName
 			t.Mutex.Lock()
-			t.CurrentTaskName = newTaskName
+				t.CurrentTaskName = newTaskName
+				if !taskRunStart.IsZero() {
+					t.TaskRunStart = taskRunStart
+					// save the progress
+					maps.Copy(t.TimeByTaskBeforeStartingThisRun, t.TimeByTask)
+				}
 			t.Mutex.Unlock()
 			t.updateInterface() // update interface to show current task name right away
 		}

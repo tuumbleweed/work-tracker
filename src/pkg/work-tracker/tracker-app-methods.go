@@ -1,6 +1,7 @@
 package worktracker
 
 import (
+	"maps"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -19,9 +20,9 @@ func (t *TrackerApp) Start() {
 		t.onButtonTapped()
 		// when main button stopped - showStopped all the buttons
 		t.Mutex.Lock()
-			allTableRows := t.TableRows
-			currentTaskName := t.CurrentTaskName
-			isRunning := t.IsRunning
+		allTableRows := t.TableRows
+		currentTaskName := t.CurrentTaskName
+		isRunning := t.IsRunning
 		t.Mutex.Unlock()
 		if !isRunning {
 			for _, taskRow := range allTableRows {
@@ -118,13 +119,13 @@ func (t *TrackerApp) updateInterface() {
 
 	// get the data
 	t.Mutex.Lock()
-		isRunning := t.IsRunning
-		workedToday := t.WorkedToday
-		activeToday := t.ActiveToday
-		lastTickActiveDuration := t.LastTickActiveDuration
-		currentTaskName := t.CurrentTaskName
-		tableRows := t.TableRows
-		timeByTask := t.TimeByTask
+	isRunning := t.IsRunning
+	workedToday := t.WorkedToday
+	activeToday := t.ActiveToday
+	lastTickActiveDuration := t.LastTickActiveDuration
+	currentTaskName := t.CurrentTaskName
+	tableRows := t.TableRows
+	timeByTask := t.TimeByTask
 	t.Mutex.Unlock()
 
 	if currentTaskName == "" {
@@ -154,7 +155,7 @@ func (t *TrackerApp) updateInterface() {
 			t.Clock.Color = getActiveColor()
 			t.TaskLabel.Color = getActiveColor()
 		} else {
-			t.Clock.Color = theme.Color(theme.ColorNameForeground) // revert to default theme color
+			t.Clock.Color = theme.Color(theme.ColorNameForeground)     // revert to default theme color
 			t.TaskLabel.Color = theme.Color(theme.ColorNameForeground) // revert to default theme color
 		}
 		t.Clock.Refresh()
@@ -220,7 +221,10 @@ func (t *TrackerApp) refreshState() {
 	}
 
 	// worked before this run + this run
-	t.WorkedToday = t.WorkedTodayBeforeStartingThisRun + now.Sub(t.RunStart)
+	workedThisRun := now.Sub(t.RunStart)
+	workedThisRunOnTask := now.Sub(t.TaskRunStart)
+	t.WorkedToday = t.WorkedTodayBeforeStartingThisRun + workedThisRun
+	t.TimeByTask[t.CurrentTaskName] = t.TimeByTaskBeforeStartingThisRun[t.CurrentTaskName] + workedThisRunOnTask
 	// add last active duration to use later
 	t.ActiveToday += t.LastTickActiveDuration
 	// add last active duration to t.ActiveDuringThisChunk (it's emptied on each flush)
@@ -240,6 +244,7 @@ func (t *TrackerApp) flipSwitch() {
 		t.IsRunning = true
 		now := time.Now()
 		t.RunStart = now
+		t.TaskRunStart = now
 		t.ChunkStart = now
 	} else {
 		// stopping
@@ -247,6 +252,8 @@ func (t *TrackerApp) flipSwitch() {
 		t.LastTickActiveDuration = 0 // empty this to show 0% when idle
 		// set new t.WorkedTodayBeforeStartingThisRun
 		t.WorkedTodayBeforeStartingThisRun = t.WorkedToday
+		// set new t.TimeByTaskBeforeStartingThisRun
+		maps.Copy(t.TimeByTaskBeforeStartingThisRun, t.TimeByTask)
 	}
 	t.CurrentTaskName = "" // set to empty here, can be overriden later
 	t.Mutex.Unlock()

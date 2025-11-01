@@ -1,6 +1,7 @@
 package worktracker
 
 import (
+	"maps"
 	"time"
 
 	er "work-tracker/src/pkg/error"
@@ -30,6 +31,9 @@ func InitializeTrackerApp(appId, windowTitle, workDir string, tickInterval, flus
 		return trackerApp, e
 	}
 	trackerApp.WorkedTodayBeforeStartingThisRun = trackerApp.WorkedToday
+	// copy by entry
+	trackerApp.TimeByTaskBeforeStartingThisRun = make(map[string]time.Duration, len(trackerApp.TimeByTask))
+	maps.Copy(trackerApp.TimeByTaskBeforeStartingThisRun, trackerApp.TimeByTask)
 
 	// initialize tickers
 	trackerApp.TickInterval = tickInterval
