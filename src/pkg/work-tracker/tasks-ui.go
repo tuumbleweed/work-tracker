@@ -1,6 +1,8 @@
 package worktracker
 
 import (
+	"image/color"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
@@ -9,56 +11,58 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-// tinyButton wraps an icon-only button into a fixed cell (e.g., 28x28).
-func tinyButton(icon fyne.Resource, onTap func()) fyne.CanvasObject {
-	btn := widget.NewButtonWithIcon("", icon, onTap)
-	cell := container.New(layout.NewGridWrapLayout(fyne.NewSize(40, 40)), btn)
-	return cell
-}
-
-// tinyHeaderCell keeps the first header column narrow, matching the play button size.
-func tinyHeaderCell() fyne.CanvasObject {
-	// could put " " or an icon legend here if you like
-	lbl := widget.NewLabel("")
-	return container.New(layout.NewGridWrapLayout(fyne.NewSize(40, 40)), lbl)
-}
+// column widths (px) – tweak to taste
+const (
+	colPlayButtonWidth  = 32
+	colNameWidth        = 260
+	colDescriptionWidth = 420
+	colCreatedAtWidth   = 180
+	colHoursWidth       = 90
+	// single-line row height
+	rowHeight = 50
+)
 
 func (t *TrackerApp) makeTasksUI(tasks []Task) *fyne.Container {
-	// Bigger, bold, centered title
+	// Title
 	sectionTitle := canvas.NewText("Tasks", theme.Color(theme.ColorNameForeground))
 	sectionTitle.Alignment = fyne.TextAlignCenter
 	sectionTitle.TextStyle = fyne.TextStyle{Bold: true}
 	sectionTitle.TextSize = theme.TextSize() * 1.6
 
-	// Header: small left cell + 4 equal data columns
-	headerRight := container.NewGridWithColumns(4,
-		labelHeader("Task"),
-		labelHeader("Description"),
-		labelHeader("Created"),
-		labelHeader("Overall Hours"),
+	// header
+	leftHeader := container.NewHBox(
+		fixedCell(labelHeader(""), colPlayButtonWidth),
+		fixedCell(labelHeader("Task"), colNameWidth),
 	)
-	header := container.NewBorder(nil, nil, tinyHeaderCell(), nil, headerRight)
+	rightHeader := container.NewHBox(
+		fixedCell(labelHeader("Created"), colCreatedAtWidth),
+		fixedCell(labelHeader("Hours"), colHoursWidth),
+	)
+	descHead := minWidth(labelHeader("Description"), colDescriptionWidth) // e.g. colDescriptionWidth px minimum
+	header := container.NewBorder(nil, nil, leftHeader, rightHeader, descHead)
 
+	// rows
 	rows := container.NewVBox()
 	for _, task := range tasks {
-		// small play button on the left
-		play := tinyButton(theme.MediaPlayIcon(), func() {
-			t.onButtonTapped()
-		})
+		// left group: ▶ + Task (both fixed widths)
+		playButton := smallButton(theme.MediaPlayIcon(), t.onButtonTapped, colPlayButtonWidth, rowHeight)
+		leftBox := container.NewHBox(
+			playButton,
+			fixedCellCenteredTruncated(task.Name, colNameWidth),
+		)
 
-		name := widget.NewLabel(task.Name)
-		name.Wrapping = fyne.TextWrapWord
+		// center: Description (expands; ellipsis)
+		// desc := truncLabel(task.Description)
+		// desc.Wrapping = fyne.TextWrap(fyne.TextTruncateClip)
+		description := fixedCellCenteredTruncated(task.Description, colDescriptionWidth)
 
-		desc := widget.NewLabel(task.Description)
-		desc.Wrapping = fyne.TextWrapWord
+		// right group: Created + Hours (both fixed)
+		right := container.NewHBox(
+			fixedCellCenteredTruncated(task.CreatedAt, colCreatedAtWidth),
+			fixedCellCenteredTruncated("0.0 h", colHoursWidth),
+		)
 
-		created := widget.NewLabel(task.CreatedAt)
-		overall := widget.NewLabel("0.0 h") // dummy for now
-
-		// Right side: 4 equal columns; left is the tiny play cell.
-		right := container.NewGridWithColumns(4, name, desc, created, overall)
-		row := container.NewBorder(nil, nil, play, nil, right)
-
+		row := container.NewBorder(nil, nil, leftBox, right, description)
 		rows.Add(row)
 	}
 
@@ -67,6 +71,49 @@ func (t *TrackerApp) makeTasksUI(tasks []Task) *fyne.Container {
 
 func labelHeader(s string) *widget.Label {
 	l := widget.NewLabelWithStyle(s, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	l.Wrapping = fyne.TextWrapWord
+	l.Wrapping = fyne.TextWrap(fyne.TextTruncateClip)
 	return l
+}
+
+func fixedCell(obj fyne.CanvasObject, w int) fyne.CanvasObject {
+	return container.New(
+		layout.NewGridWrapLayout(fyne.NewSize(float32(w), rowHeight)),
+		obj,
+	)
+}
+
+// minWidth wraps obj so it can expand but never be narrower than minW.
+func minWidth(obj fyne.CanvasObject, minW int) fyne.CanvasObject {
+	shim := canvas.NewRectangle(color.Transparent)
+	shim.SetMinSize(fyne.NewSize(float32(minW), rowHeight)) // rowH if you want a row-height floor
+	return container.NewStack(shim, obj)                    // shim contributes MinSize; obj draws on top
+}
+
+// fixedTruncVCenterCell gives obj the full cell size (so truncation works) and
+// centers it vertically with spacers. Text stays left-aligned.
+func fixedCellCenteredTruncated(text string, w int) fyne.CanvasObject {
+	l := widget.NewLabel(text)
+	l.Wrapping = fyne.TextWrapOff        // no wrapping
+	l.Truncation = fyne.TextTruncateClip // "…" when too long
+	l.Alignment = fyne.TextAlignLeading  // left aligned
+
+	// VBox with spacers => vertical center; MaxLayout => child gets full cell size
+	v := container.NewVBox(layout.NewSpacer(), l, layout.NewSpacer())
+	return container.New(
+		layout.NewGridWrapLayout(fyne.NewSize(float32(w), rowHeight)),
+		container.New(layout.NewStackLayout(), v), // make v fill the fixed cell
+	)
+}
+
+// tinyButton centers the icon button inside a fixed cell.
+func smallButton(icon fyne.Resource, onTap func(), width, height float32) fyne.CanvasObject {
+	btn := widget.NewButtonWithIcon("", icon, onTap)
+	// Optional: make it visually lighter
+	// btn.Importance = widget.LowImportance
+
+	centered := container.NewCenter(btn)
+	return container.New(
+		layout.NewGridWrapLayout(fyne.NewSize(width, height)),
+		centered, // centered inside the play button cell
+	)
 }
