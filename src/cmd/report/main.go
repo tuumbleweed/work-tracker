@@ -160,25 +160,25 @@ type hueBand struct {
 
 var paletteBands = []hueBand{
 	{210, 230, 0.70, 0.52}, // blue
-	{235, 255, 0.65, 0.52}, // indigo
-	{190, 205, 0.70, 0.48}, // cyan
+	{35, 45, 0.85, 0.50},   // amber
+	{95, 110, 0.70, 0.48},  // lime
+	{270, 290, 0.60, 0.52}, // purple
+	{310, 330, 0.65, 0.52}, // magenta
+	{50, 60, 0.90, 0.46},   // yellow
+	{335, 350, 0.65, 0.52}, // pink
 	{170, 185, 0.65, 0.50}, // teal
 	{120, 135, 0.65, 0.50}, // green
-	{95, 110, 0.70, 0.48},  // lime
-	{50, 60, 0.90, 0.46},   // yellow
-	{35, 45, 0.85, 0.50},   // amber
+	{190, 205, 0.70, 0.48}, // cyan
+	{235, 255, 0.65, 0.52}, // indigo
 	{20, 30, 0.80, 0.50},   // orange
-	{335, 350, 0.65, 0.52}, // pink
-	{310, 330, 0.65, 0.52}, // magenta
-	{270, 290, 0.60, 0.52}, // purple
 }
 
-func taskColorHex(task string) string {
+func taskColorHex(id int, task string) string {
 	h := fnv.New32a()
 	_, _ = h.Write([]byte(task))
 	hash := h.Sum32()
 
-	bandIdx := int(hash % uint32(len(paletteBands)))
+	bandIdx := int(uint32(id) % uint32(len(paletteBands)))
 	band := paletteBands[bandIdx]
 
 	// vary hue inside band
@@ -364,7 +364,7 @@ func readDayFile(filePath string, date time.Time, smooth float64) (sum DaySummar
 
 		task := ch.TaskName
 		if strings.TrimSpace(task) == "" {
-			task = "(No task)"
+			task = "Unassigned Time"
 		}
 		sum.TaskDurations[task] += dur
 
@@ -583,9 +583,9 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
           <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
 `, rangeTitle(startDate, endDate), rangeTitle(startDate, endDate), formatDuration(totals.TotalWorked), buildRadialProgressSVG(96, 10, avgActivity, activityHex))
 
-	for _, name := range taskNames {
+	for i, name := range taskNames {
 		dur := totals.PerTaskTotals[name]
-		c := taskColorHex(name)
+		c := taskColorHex(i, name)
 		fmt.Fprintf(buf, `            <tr>
               <td style="padding:4px 10px;font-family:Arial, sans-serif;font-size:13px;color:#333;vertical-align:middle;text-align:center;">
                 <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 auto;">
@@ -650,13 +650,13 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 			fmt.Fprintf(buf, `                            <tr><td style="height:%dpx;line-height:0;font-size:0;">&nbsp;</td></tr>
 `, topSpacer)
 		}
-		for _, tname := range dayTasks {
+		for i, tname := range dayTasks {
 			seg := segHeight(dsum.TaskDurations[tname])
 			if seg <= 0 {
 				continue
 			}
 			fmt.Fprintf(buf, `                            <tr><td style="background:%s;height:%dpx;line-height:0;font-size:0;">&nbsp;</td></tr>
-`, taskColorHex(tname), seg)
+`, taskColorHex(i, tname), seg)
 		}
 
 		fmt.Fprintf(buf, `                          </table>
@@ -688,7 +688,7 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 		}
 		fmt.Fprintf(buf, `              <td style="background:%s;width:10px;height:10px;line-height:0;font-size:0;">&nbsp;</td>
               <td style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding:0 0 0 6px;">%s</td>
-`, taskColorHex(name), esc(name))
+`, taskColorHex(idx, name), esc(name))
 	}
 	fmt.Fprintf(buf, `            </tr>
           </table>
