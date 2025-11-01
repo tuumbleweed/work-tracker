@@ -531,6 +531,12 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 	}
 	activityHex := colorToHex(barColorFor(avgActivity))
 
+	// Activity color legend swatches
+	hex0 := colorToHex(barColorFor(0))
+	hex50 := colorToHex(barColorFor(50))
+	hex75 := colorToHex(barColorFor(75))
+	hex100 := colorToHex(barColorFor(100))
+
 	// ---------- HTML ----------
 	fmt.Fprintf(buf, `<!doctype html>
 <html>
@@ -616,12 +622,11 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
               </td>
 `, maxDayRowHeight-barHeightPx, barHeightPx, esc(formatDuration(barRef)))
 
-	// Bars for each day
 	for i, dsum := range daySummaries {
 		containerH := dayContainerHeights[i]
 		dayTotalH := segHeight(dsum.TotalDuration)
 		if dayTotalH > containerH {
-			dayTotalH = containerH // safety (shouldn't happen)
+			dayTotalH = containerH
 		}
 		topSpacer := containerH - dayTotalH
 		if topSpacer < 0 {
@@ -696,7 +701,7 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
         </td>
       </tr>
       <tr>
-        <td align="center" style="padding:2px 0 16px 0;">
+        <td align="center" style="padding:2px 0 6px 0;">
           <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
             <tr valign="bottom">
               <!-- Marker gutter -->
@@ -749,11 +754,33 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
         </td>
       </tr>
 
+      <!-- Activity × Time legend -->
+      <tr>
+        <td align="center" style="padding:2px 0 1px 0;">
+          <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+            <tr>
+              <td style="background:%s;width:10px;height:10px;line-height:0;font-size:0;">&nbsp;</td>
+              <td style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding:0 12px 0 6px;">0%%</td>
+
+              <td style="background:%s;width:10px;height:10px;line-height:0;font-size:0;">&nbsp;</td>
+              <td style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding:0 12px 0 6px;">50%%</td>
+
+              <td style="background:%s;width:10px;height:10px;line-height:0;font-size:0;">&nbsp;</td>
+              <td style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding:0 12px 0 6px;">75%%</td>
+
+              <td style="background:%s;width:10px;height:10px;line-height:0;font-size:0;">&nbsp;</td>
+              <td style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding:0 0 0 6px;">100%%</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+
     </table>
   </body>
 </html>
-`)
+`, hex0, hex50, hex75, hex100)
 }
+
 
 /*
 Enumerate dates.
