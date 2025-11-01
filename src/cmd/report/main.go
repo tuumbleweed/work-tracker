@@ -605,7 +605,7 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 
       <!-- Time by Day (stacked per task) -->
       <tr>
-        <td align="center" style="padding:15px 0 0 0;">
+        <td align="center" style="padding:15px 0 10px 0;">
           <div style="font-family:Arial, sans-serif;color:#222;font-size:14px;">Time by Day (%s baseline)</div>
         </td>
       </tr>
@@ -697,8 +697,8 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 
       <!-- Activity × Time -->
       <tr>
-        <td align="center" style="padding:15px 0 0 0;">
-          <div style="font-family:Arial, sans-serif;color:#222;font-size:14px;">Activity × Time (%s baseline)</div>
+        <td align="center" style="padding:15px 0 10px 0;">
+          <div style="font-family:Arial, sans-serif;color:#222;font-size:14px;">Activity × Time</div>
         </td>
       </tr>
 
@@ -710,7 +710,7 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
               <td>
                 <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 auto;">
                   <tr valign="bottom">
-`, esc(formatDuration(barRef)), chartW)
+`, chartW)
 
 	for i, dsum := range daySummaries {
 		dayPct := 0.0
@@ -756,17 +756,17 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
         <td align="center" style="padding:2px 0 20px 0;">
           <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
             <tr>
-              <td style="background:%s;width:10px;height:10px;line-height:0;font-size:0;">&nbsp;</td>
-              <td style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding:0 12px 0 6px;">0%%</td>
+              <td style="background:%[1]s;width:10px;height:10px;line-height:0;font-size:0;">&nbsp;</td>
+              <td style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding:0 12px 0 6px;">%[5]s × 0%%</td>
 
-              <td style="background:%s;width:10px;height:10px;line-height:0;font-size:0;">&nbsp;</td>
-              <td style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding:0 12px 0 6px;">50%%</td>
+              <td style="background:%[2]s;width:10px;height:10px;line-height:0;font-size:0;">&nbsp;</td>
+              <td style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding:0 12px 0 6px;">%[5]s × 50%%</td>
 
-              <td style="background:%s;width:10px;height:10px;line-height:0;font-size:0;">&nbsp;</td>
-              <td style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding:0 12px 0 6px;">75%%</td>
+              <td style="background:%[3]s;width:10px;height:10px;line-height:0;font-size:0;">&nbsp;</td>
+              <td style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding:0 12px 0 6px;">%[5]s × 75%%</td>
 
-              <td style="background:%s;width:10px;height:10px;line-height:0;font-size:0;">&nbsp;</td>
-              <td style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding:0 0 0 6px;">100%%</td>
+              <td style="background:%[4]s;width:10px;height:10px;line-height:0;font-size:0;">&nbsp;</td>
+              <td style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding:0 0 0 6px;">%[5]s × 100%%</td>
             </tr>
           </table>
         </td>
@@ -787,7 +787,7 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 
   </body>
 </html>
-`, hex0, hex50, hex75, hex100)
+`, hex0, hex50, hex75, hex100, esc(formatDuration(barRef)))
 }
 
 
@@ -874,8 +874,8 @@ func main() {
 	flagInputDir := flag.String("dir", "./out", "Directory with day JSONL files")
 	flagOutputPath := flag.String("output", "./out/report.html", "Path to write the HTML report")
 	flagTZ := flag.String("tz", "America/Bogota", "IANA timezone for week boundaries and display")
-	flagBarRef := flag.Duration("ref", 12*time.Minute, "Reference duration for the horizontal marker line (N hours)")
-	flagSmooth := flag.Float64("smooth", 0.4, "Activity smoothing in [0..1], 0=linear, 1=strong")
+	flagBarRef := flag.Duration("ref", 12*time.Hour, "Reference duration for the horizontal marker line (N hours)")
+	flagSmooth := flag.Float64("smooth", 0.0, "Activity smoothing in [0..1], 0=linear, 1=strong")
 
 	// parse and init config
 	flag.Parse()
