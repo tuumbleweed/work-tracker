@@ -84,7 +84,7 @@ func (t *TrackerApp) makeTasksUI(tasks []Task) *fyne.Container {
 					taskRunStart = time.Now()
 					newTaskName = task.Name
 
-					logger.Log(logger.Info, logger.CyanColor, "%s at %s. Previous: '%s', New: '%s'", "Switching tasks", taskRunStart.String(), previousTaskName, newTaskName)
+					logger.Log(logger.Info, logger.CyanColor, "%s. Previous: '%s', New: '%s'", "Switching tasks", previousTaskName, newTaskName)
 				} else {
 					t.onButtonTapped()
 					newTaskName = "" // reset newTaskName on stopping
