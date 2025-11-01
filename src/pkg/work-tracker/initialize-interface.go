@@ -50,7 +50,7 @@ func initializeInterface(appId, windowTitle string) (t *TrackerApp, e *er.Error)
 
 	// start button
 	t.Button = widget.NewButtonWithIcon("Start", theme.MediaPlayIcon(), nil)
-	t.Button.Importance = widget.HighImportance
+	t.Button.Importance = widget.MediumImportance
 
 	// after you computed tickers & LastTickStart...
 	tasks, e := loadTasks("./tmp/tasks.json")

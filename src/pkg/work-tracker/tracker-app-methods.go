@@ -139,7 +139,7 @@ func (t *TrackerApp) updateInterface() {
 		} else {
 			t.Button.SetText("Start")
 			t.Button.SetIcon(theme.MediaPlayIcon())
-			t.Button.Importance = widget.HighImportance
+			t.Button.Importance = widget.MediumImportance
 			t.Button.Refresh()
 		}
 	})
