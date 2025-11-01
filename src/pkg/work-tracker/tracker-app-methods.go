@@ -7,7 +7,6 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
-	// "fyne.io/fyne/v2/widget"
 
 	"work-tracker/src/pkg/logger"
 )
@@ -62,6 +61,7 @@ func (t *TrackerApp) setContent() {
 		container.NewCenter(t.Button),
 		vgap(1, 10),
 		t.TasksContainer,
+		vgap(1, 10),
 	)
 	t.Window.SetContent(container.NewPadded(content))
 }

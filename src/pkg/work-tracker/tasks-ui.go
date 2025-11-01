@@ -14,7 +14,7 @@ import (
 
 // column widths (px) – tweak to taste
 const (
-	colPlayButtonWidth  = 32
+	colPlayButtonWidth  = 80
 	colNameWidth        = 260
 	colDescriptionWidth = 420
 	colCreatedAtWidth   = 260
