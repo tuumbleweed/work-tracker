@@ -21,7 +21,7 @@ calculate active time for the last tick
 - Organize UI code in a better way, currently a mess, especially button handling.
 
 ## Reporting
-- Add an HTML report. 
+- Add an HTML report.
     - We are going to only use it locally, so no need for an email.
         - Thus we can use regular `<style>` instead of inline
     - HTML report is saved to file and then opened right away with chrome browser.

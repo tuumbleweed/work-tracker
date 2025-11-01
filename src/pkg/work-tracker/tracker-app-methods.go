@@ -174,13 +174,9 @@ func (t *TrackerApp) updateInterface() {
 		if isRunning {
 			t.Button.SetText("Stop")
 			showRunning(t.Button)
-			// t.Button.Importance = widget.WarningImportance // Importance change needs a Refresh()
-			// t.Button.SetIcon(theme.MediaPauseIcon()) // SetIcon calls Refresh
 		} else {
 			t.Button.SetText("Start")
 			showStopped(t.Button)
-			// t.Button.Importance = widget.MediumImportance
-			// t.Button.SetIcon(theme.MediaPlayIcon())
 		}
 
 		// update table rows
