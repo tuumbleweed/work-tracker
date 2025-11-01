@@ -606,7 +606,7 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
       <!-- Time by Day (stacked per task) -->
       <tr>
         <td align="center" style="padding:15px 0 0 0;">
-          <div style="font-family:Arial, sans-serif;color:#222;font-size:14px;">Time by Day</div>
+          <div style="font-family:Arial, sans-serif;color:#222;font-size:14px;">Time by Day (%s baseline)</div>
         </td>
       </tr>
 
@@ -615,13 +615,10 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
         <td align="center" style="padding:2px 0 0 0;">
           <table role="presentation" cellpadding="0" cellspacing="0" width="%d" style="border-collapse:collapse;">
             <tr>
-              <td align="left" style="font-family:Arial, sans-serif;font-size:11px;color:#777;padding:0 0 2px 0; text-indent:-25px;">%s</td>
-            </tr>
-            <tr>
               <td>
                 <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 auto;">
                   <tr valign="bottom">
-`, chartW, esc(formatDuration(barRef)))
+`, esc(formatDuration(barRef)), chartW)
 
 	for i, dsum := range daySummaries {
 		containerH := dayContainerHeights[i]
@@ -701,7 +698,7 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
       <!-- Activity × Time -->
       <tr>
         <td align="center" style="padding:15px 0 0 0;">
-          <div style="font-family:Arial, sans-serif;color:#222;font-size:14px;">Activity × Time</div>
+          <div style="font-family:Arial, sans-serif;color:#222;font-size:14px;">Activity × Time (%s baseline)</div>
         </td>
       </tr>
 
@@ -710,13 +707,10 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
         <td align="center" style="padding:2px 0 6px 0;">
           <table role="presentation" cellpadding="0" cellspacing="0" width="%d" style="border-collapse:collapse;">
             <tr>
-              <td align="left" style="font-family:Arial, sans-serif;font-size:11px;color:#777;padding:0 0 2px 0; text-indent:-25px;">%s</td>
-            </tr>
-            <tr>
               <td>
                 <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 auto;">
                   <tr valign="bottom">
-`, chartW, esc(formatDuration(barRef)))
+`, esc(formatDuration(barRef)), chartW)
 
 	for i, dsum := range daySummaries {
 		dayPct := 0.0
