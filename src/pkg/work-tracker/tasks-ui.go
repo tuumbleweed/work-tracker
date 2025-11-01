@@ -52,9 +52,7 @@ func (t *TrackerApp) makeTasksUI(tasks []Task) *fyne.Container {
 		)
 
 		// center: Description (expands; ellipsis)
-		// desc := truncLabel(task.Description)
-		// desc.Wrapping = fyne.TextWrap(fyne.TextTruncateClip)
-		description := fixedCellCenteredTruncated(task.Description, colDescriptionWidth)
+		description := flexVCenterTruncated(task.Description)
 
 		// right group: Created + Hours (both fixed)
 		right := container.NewHBox(
@@ -94,7 +92,7 @@ func minWidth(obj fyne.CanvasObject, minW int) fyne.CanvasObject {
 func fixedCellCenteredTruncated(text string, w int) fyne.CanvasObject {
 	l := widget.NewLabel(text)
 	l.Wrapping = fyne.TextWrapOff        // no wrapping
-	l.Truncation = fyne.TextTruncateClip // "…" when too long
+	l.Truncation = fyne.TextTruncateEllipsis // "…" when too long
 	l.Alignment = fyne.TextAlignLeading  // left aligned
 
 	// VBox with spacers => vertical center; MaxLayout => child gets full cell size
@@ -103,6 +101,17 @@ func fixedCellCenteredTruncated(text string, w int) fyne.CanvasObject {
 		layout.NewGridWrapLayout(fyne.NewSize(float32(w), rowHeight)),
 		container.New(layout.NewStackLayout(), v), // make v fill the fixed cell
 	)
+}
+
+func flexVCenterTruncated(text string) fyne.CanvasObject {
+	l := widget.NewLabel(text)
+	l.Wrapping   = fyne.TextWrapOff
+	l.Truncation = fyne.TextTruncateEllipsis
+	l.Alignment  = fyne.TextAlignLeading
+
+	v := container.NewVBox(layout.NewSpacer(), l, layout.NewSpacer())
+	// Fill all available center space in Border using StackLayout:
+	return container.New(layout.NewStackLayout(), v)
 }
 
 // tinyButton centers the icon button inside a fixed cell.
