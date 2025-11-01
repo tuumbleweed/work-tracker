@@ -540,13 +540,13 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
           <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
             <tr valign="middle">
               <td align="center" style="padding:0 16px;">
-                <div style="font-family:Arial, sans-serif;font-size:13px;color:#666;padding-bottom:4px;">Total Worked</div>
-                <div style="font-family:Arial, sans-serif;font-size:30px;color:#111;font-weight:bold;">%s</div>
+                <div style="font-family:Arial, sans-serif;font-size:13px;color:#666;padding-bottom:15px;padding-top:0px;">Total Worked</div>
+                <div style="font-family:Arial, sans-serif;font-size:38px;color:#111;font-weight:bold;">%s</div>
               </td>
               <td align="center" style="padding:0 16px;">
                 <div style="font-family:Arial, sans-serif;font-size:13px;color:#666;padding-bottom:4px;">Avg Activity</div>
                 %s
-                <div style="font-family:Arial, sans-serif;font-size:18px;color:#111;font-weight:bold;margin-top:6px;">%.1f%%</div>
+                <div style="font-family:Arial, sans-serif;font-size:24px;color:#111;font-weight:bold;margin-top:4px;">%.1f%%</div>
               </td>
             </tr>
           </table>
