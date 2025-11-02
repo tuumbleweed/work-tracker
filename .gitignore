@@ -1,7 +1,7 @@
 # If this project is part of a larger monorepo - better make
 # root .gitignore file instead with all those rules
 
-# binary
+# build
 build/*
 !build/Dockerfile
 
