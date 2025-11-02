@@ -29,7 +29,7 @@ func NewError(err error, msg string, context any) (e *Error) {
 	e = &Error{
 		Err:     err,
 		Msg:     msg,
-		Where:   getCallerLocation(2),
+		Where:   getCallerLocation(3),
 		Context: contextString, // user-provided context
 	}
 	if err != nil {
