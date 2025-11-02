@@ -2,7 +2,7 @@
 Type=Application
 Name=Work Report
 Comment=Generate a Work Tracker report
-Exec=/usr/bin/env bash -lc 'nohup /data/code/mine/-mine-important/-current/work-tracker/scripts/report.sh >/tmp/report.log 2>&1 & disown'
+Exec=/usr/bin/env bash -lc '/data/code/mine/-mine-important/-current/work-tracker/scripts/report.sh >/tmp/report.log 2>&1'
 Path=/data/code/mine/-mine-important/-current/work-tracker
 Terminal=false
 Categories=Office;Utility;
