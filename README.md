@@ -13,7 +13,7 @@ UI and activity share same ticker at the moment.
 later we can implement a separate tick that would sample activity in shorter periods
 calculate active time for the last tick.
 
-Alternatively I can set it to 100% accuracy so long as time since any key was pressed is lower
+Alternatively I can set it to 100% activity so long as time since any key was pressed is lower
 than the activity poll window.
 
 Either way I should separate activity polling from the UI updates.
