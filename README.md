@@ -28,8 +28,8 @@ calculate active time for the last tick
     - ~~Should contain bar charts~~
         - ~~Time by task~~
         - ~~Time*activity~~
-    - Move report code to it's separate package
-    - Send an email option
+    - ~~Move report code to it's separate package~~
+    - ~~Send an email option~~
 
 ## Installing
 - Add desktop entry
