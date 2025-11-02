@@ -2,8 +2,8 @@
 Type=Application
 Name=Work Tracker
 Comment=Start the Work Tracker application
-Exec=/usr/bin/env bash -lc 'nohup /data/code/mine/-mine-important/-current/work-tracker/scripts/work-tracker.sh >/tmp/work-tracker.log 2>&1 & disown'
-Path=/data/code/mine/-mine-important/-current/work-tracker
+Exec=/usr/bin/env bash -lc 'nohup ${WT_ROOT}/scripts/work-tracker.sh >/tmp/work-tracker.log 2>&1 & disown'
+Path=${WT_ROOT}
 Terminal=false
 Categories=Office;Utility;
-Icon=/data/code/mine/-mine-important/-current/work-tracker/pictures/work-tracker-icon.png
+Icon=${WT_ROOT}/pictures/work-tracker-icon.png

@@ -2,8 +2,8 @@
 Type=Application
 Name=Work Report
 Comment=Generate a Work Tracker report
-Exec=/usr/bin/env bash -lc '/data/code/mine/-mine-important/-current/work-tracker/scripts/report.sh >/tmp/report.log 2>&1'
-Path=/data/code/mine/-mine-important/-current/work-tracker
+Exec=/usr/bin/env bash -lc '${WT_ROOT}/scripts/report.sh >/tmp/report.log 2>&1'
+Path=${WT_ROOT}
 Terminal=false
 Categories=Office;Utility;
-Icon=/data/code/mine/-mine-important/-current/work-tracker/pictures/report-icon.png
+Icon=${WT_ROOT}/pictures/report-icon.png

@@ -53,7 +53,7 @@ install_desktop_files() {
       base="$name.desktop"
     fi
 
-    src="./scripts/$base"
+    src="./build/$base"
     dest="$apps_dir/$base"
 
     if [[ ! -f "$src" ]]; then
@@ -79,4 +79,47 @@ install_desktop_files() {
   fi
 
   return $any_failed
+}
+
+# Render desktop templates from ./scripts to ./build by substituting ${WT_ROOT}.
+# Usage:
+#   render_desktop_templates /absolute/project/root work-tracker report
+# Looks for ./scripts/<name>.desktop.in (preferred) or ./scripts/<name>.desktop,
+# writes ./build/<name>.desktop with ${WT_ROOT} substituted.
+render_desktop_templates() {
+  local wt_root="$1"; shift
+  if [[ -z "$wt_root" ]]; then
+    echo "render_desktop_templates: missing WT_ROOT path" >&2
+    return 1
+  fi
+  mkdir -p ./build
+
+  local name in out esc_root
+  # Pre-escape for sed fallback
+  esc_root=$(printf '%s' "$wt_root" | sed -e 's/[&/\]/\\&/g')
+
+  for name in "$@"; do
+    # allow with/without .desktop in args
+    [[ "$name" == *.desktop ]] && name="${name%.desktop}"
+
+    in="./scripts/$name.desktop.in"
+    [[ -f "$in" ]] || in="./scripts/$name.desktop"
+    out="./build/$name.desktop"
+
+    if [[ ! -f "$in" ]]; then
+      echo "Missing desktop template: $in" >&2
+      return 1
+    fi
+
+    if command -v envsubst >/dev/null 2>&1; then
+      WT_ROOT="$wt_root" envsubst <"$in" >"$out"
+    else
+      # Fallback: sed textual substitution
+      sed "s|\${WT_ROOT}|$esc_root|g" "$in" >"$out"
+    fi
+
+    # Mark executable (some DEs ignore, harmless otherwise)
+    chmod +x "$out" 2>/dev/null || true
+    echo "Rendered $in → $out"
+  done
 }

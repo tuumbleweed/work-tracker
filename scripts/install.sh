@@ -7,4 +7,9 @@ source "$(dirname "${BASH_SOURCE[0]}")/shared.sh"
 
 cd_to_project_dir
 build_go_binaries report tracker send-email
+
+# Render templates with the detected project root
+render_desktop_templates "$THIS_PROJECT_DIR" work-tracker report
+
+# Install the freshly rendered files from ./build/
 install_desktop_files work-tracker report
