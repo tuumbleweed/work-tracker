@@ -36,7 +36,6 @@ func main() {
 
 	logger.Log(logger.Notice, logger.BoldBlueColor, "%s report entrypoint. Config path: '%s'", "Running", *configPath)
 
-
 	// Resolve TZ + date range
 	_, startDate, endDate, e := report.ResolveRange(*flagTZ, *flagStart, *flagEnd)
 	e.QuitIf("error")
