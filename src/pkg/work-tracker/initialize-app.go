@@ -8,14 +8,14 @@ import (
 	"work-tracker/src/pkg/logger"
 )
 
-func InitializeTrackerApp(appId, windowTitle, workDir string, tickInterval, flushInterval time.Duration) (trackerApp *TrackerApp, e *er.Error) {
+func InitializeTrackerApp(appId, windowTitle, workDir, tasksFilePath string, tickInterval, flushInterval time.Duration) (trackerApp *TrackerApp, e *er.Error) {
 	logger.Log(
 		logger.Important, logger.BoldBlueColor,
 		"%s tracker app. App id: '%s', window title: '%s', work dir: '%s', tick interval: %s, flush interval: '%s'",
 		"Initializing", appId, windowTitle, workDir, tickInterval, flushInterval,
 	)
 
-	trackerApp ,e = initializeInterface(appId, windowTitle)
+	trackerApp ,e = initializeInterface(appId, windowTitle, tasksFilePath)
 	if e != nil {
 		return trackerApp, e
 	}

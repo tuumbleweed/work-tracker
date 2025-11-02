@@ -14,7 +14,7 @@ import (
 // initializeInterface sets up the Fyne app/window and constructs the UI widgets.
 // It does NOT wire handlers, lay out content, or start tickers.
 // Call t.initUI() later to compose these widgets into the window.
-func initializeInterface(appId, windowTitle string) (t *TrackerApp, e *er.Error) {
+func initializeInterface(appId, windowTitle, tasksFilePath string) (t *TrackerApp, e *er.Error) {
 	logger.Log(logger.Notice, logger.BoldBlueColor, "%s for '%s'", "Initializing interface", windowTitle)
 
 	// set up the app
@@ -59,7 +59,7 @@ func initializeInterface(appId, windowTitle string) (t *TrackerApp, e *er.Error)
 	t.Button.Importance = widget.MediumImportance
 
 	// after you computed tickers & LastTickStart...
-	tasks, e := loadTasks("./tmp/tasks.json")
+	tasks, e := loadTasks(tasksFilePath)
 	if e != nil {
 		return t, e
 	}

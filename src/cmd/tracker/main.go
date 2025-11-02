@@ -22,6 +22,7 @@ func main() {
 	uiInterval := flag.Duration("tick-interval", 500*time.Millisecond, "UI and activity update period (e.g. 2m, 10m, 1h)")
 	chunkInterval := flag.Duration("flush-interval", 1*time.Second, "Autosave period (e.g. 2m, 10m, 1h)")
 	workDir := flag.String("work-dir", "./out", "Directory for daily JSONL files")
+	tasksFilePath := flag.String("tasks", "./cfg/tasks.json", "File with tasks and their descriptions")
 	// parse and init config
 	flag.Parse()
 	config.InitializeConfig(*configPath, logger.LogLevel(*logLevelOverride), *logDirOverride)
@@ -33,7 +34,7 @@ func main() {
 
 	util.CreateDirIfDoesntExist(*workDir).QuitIf("error")
 
-	trackerApp, e := worktracker.InitializeTrackerApp("Worktracker", "Work Tracker", *workDir, *uiInterval, *chunkInterval)
+	trackerApp, e := worktracker.InitializeTrackerApp("Worktracker", "Work Tracker", *workDir, *tasksFilePath, *uiInterval, *chunkInterval)
 	e.QuitIf("error")
 	trackerApp.Start()
 }
