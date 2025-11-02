@@ -11,7 +11,12 @@ tick then the whole tick will get near 100% activity.
 that's why we need to keep tick size small right now (500ms will do).
 UI and activity share same ticker at the moment.
 later we can implement a separate tick that would sample activity in shorter periods
-calculate active time for the last tick
+calculate active time for the last tick.
+
+Alternatively I can set it to 100% accuracy so long as time since any key was pressed is lower
+than the activity poll window.
+
+Either way I should separate activity polling from the UI updates.
 ```
 
 ## Work Tracker
