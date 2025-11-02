@@ -13,3 +13,25 @@ cd_to_project_dir() {
     cd "$THIS_PROJECT_DIR" || exit 1
     echo "Running in $(pwd)"
 }
+
+# Build Go binaries by name.
+# Usage: build_go_binaries report tracker send-email
+build_go_binaries() {
+  # ensure build dir exists
+  mkdir -p ./build
+
+  local name src out
+  for name in "$@"; do
+    src="src/cmd/$name/main.go"
+    out="./build/$name"
+
+    if [[ ! -f "$src" ]]; then
+      echo "Missing source for '$name': $src"
+      return 1
+    fi
+
+    # Respect GOOS/GOARCH/GOFLAGS/CGO_ENABLED if caller sets them
+    go build -o "$out" "$src"
+    echo "Built $name"
+  done
+}
