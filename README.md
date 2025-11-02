@@ -32,9 +32,8 @@ calculate active time for the last tick
     - ~~Send an email option~~
 
 ## Installing
-- Add desktop entry
-    - Work Tracker
-    - Report
-- Add icon
-- Add install.sh script
-- Add report generation scripts
+- ~~Add desktop entries~~
+    - ~~Work Tracker~~
+    - ~~Report~~
+- ~~Add icons~~
+- ~~Add install.sh script~~
