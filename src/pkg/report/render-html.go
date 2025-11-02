@@ -117,21 +117,21 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 		// Adaptive geometry for long ranges
 		const maxInnerW = 640 // inner width that fits your 760px wrapper
 		const minBarW = 1
-		const minPad = 0
+		const minPad = 1
 
 		perDayW := int(math.Floor(float64(maxInnerW) / float64(nDays)))
-		if perDayW < (minBarW + 2*minPad) {
-			perDayW = minBarW + 2*minPad
+		if perDayW < (minBarW + 1*minPad) {
+			perDayW = minBarW + 1*minPad
 		}
 		pad = perDayW / 4 // ~25% of slot as padding
 		if pad < minPad {
 			pad = minPad
 		}
-		barW = perDayW - 2*pad
+		barW = perDayW - 1*pad
 		if barW < minBarW {
 			barW = minBarW
 		}
-		perDaySlot = barW + 2*pad
+		perDaySlot = barW + 1*pad
 		chartW = nDays * perDaySlot
 		if chartW > maxInnerW {
 			chartW = maxInnerW
@@ -230,7 +230,7 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
         <td align="center" style="padding:2px 0 0 0;">
           <table role="presentation" cellpadding="0" cellspacing="0" width="%d" style="border-collapse:collapse;">
             <tr>
-              <td>
+              <td style="padding:0 20px;">
                 <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 auto;">
                   <tr valign="bottom">
 `, esc(formatDuration(barRef)), chartW)
