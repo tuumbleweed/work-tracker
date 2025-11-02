@@ -100,11 +100,55 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 	hex75 := colorToHex(barColorFor(75))
 	hex100 := colorToHex(barColorFor(100))
 
-	// Chart geometry for centering (per-day width = bar width + left/right padding)
-	const barW = 28
-	const pad = 8
-	perDayW := barW + 2*pad
-	chartW := len(daySummaries) * perDayW // used to center the inner table
+	// ---------- Chart geometry (classic for ≤14 days, adaptive for >14) ----------
+	nDays := len(daySummaries)
+	if nDays < 1 {
+		nDays = 1
+	}
+	weeklyMode := nDays <= 14
+
+	// Outputs we’ll use below
+	barW := 28
+	pad := 8
+	perDaySlot := barW + 2*pad
+	chartW := nDays * perDaySlot
+
+	if !weeklyMode {
+		// Adaptive geometry for long ranges
+		const maxInnerW = 640 // inner width that fits your 760px wrapper
+		const minBarW = 1
+		const minPad = 0
+
+		perDayW := int(math.Floor(float64(maxInnerW) / float64(nDays)))
+		if perDayW < (minBarW + 2*minPad) {
+			perDayW = minBarW + 2*minPad
+		}
+		pad = perDayW / 4 // ~25% of slot as padding
+		if pad < minPad {
+			pad = minPad
+		}
+		barW = perDayW - 2*pad
+		if barW < minBarW {
+			barW = minBarW
+		}
+		perDaySlot = barW + 2*pad
+		chartW = nDays * perDaySlot
+		if chartW > maxInnerW {
+			chartW = maxInnerW
+		}
+	}
+
+	// ---------- Label strategy ----------
+	// Weekly: show all day names exactly like before (no clipping box).
+	// Long ranges: thin or replace with ticks; also clip width to per-day slot so text can’t spill.
+	labelStep := 0
+	useTicks := false
+	labelStyle := "font-family:Arial, sans-serif;font-size:12px;color:#555;padding-top:6px;" // weekly default
+
+	if !weeklyMode {
+		useTicks = false
+		labelStyle = fmt.Sprintf("font-family:Arial, sans-serif;font-size:12px;color:#555;padding-top:6px;width:%dpx;overflow:hidden;white-space:nowrap;line-height:1;", perDaySlot)
+	}
 
 	// ---------- HTML ----------
 	fmt.Fprintf(buf, `<!doctype html>
@@ -147,12 +191,12 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
           <div style="font-family:Arial, sans-serif;font-size:14px;color:#444;padding-bottom:6px;font-weight:bold;">Tasks in period</div>
           <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
 `,
-	reportTitle(startDate, endDate),
-	reportTitle(startDate, endDate),
-	formatDuration(totals.TotalWorked),
-	buildSquares10HTML(avgActivity, activityHex),
-	avgActivity,
-)
+		reportTitle(startDate, endDate),
+		reportTitle(startDate, endDate),
+		formatDuration(totals.TotalWorked),
+		buildSquares10HTML(avgActivity, activityHex),
+		avgActivity,
+	)
 
 	for i, name := range taskNames {
 		dur := totals.PerTaskTotals[name]
@@ -181,7 +225,7 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
         </td>
       </tr>
 
-      <!-- Centered chart wrapper with top-left label INSIDE (doesn't affect centering) -->
+      <!-- Centered chart wrapper -->
       <tr>
         <td align="center" style="padding:2px 0 0 0;">
           <table role="presentation" cellpadding="0" cellspacing="0" width="%d" style="border-collapse:collapse;">
@@ -191,8 +235,8 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
                   <tr valign="bottom">
 `, esc(formatDuration(barRef)), chartW)
 
-	for i, dsum := range daySummaries {
-		containerH := dayContainerHeights[i]
+	for dayIdx, dsum := range daySummaries {
+		containerH := dayContainerHeights[dayIdx]
 		dayTotalH := segHeight(dsum.TotalDuration)
 		if dayTotalH > containerH {
 			dayTotalH = containerH
@@ -210,6 +254,8 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 			}
 		}
 
+		// NOTE: the outer <td> has only horizontal padding = pad, so the per-column
+		// width is exactly perDaySlot, matching the bar/table inside (no hidden widening).
 		fmt.Fprintf(buf, `                    <!-- Day bar -->
                     <td align="center" style="padding:0 %dpx;">
                       <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
@@ -221,21 +267,39 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 			fmt.Fprintf(buf, `                            <tr><td style="height:%dpx;line-height:0;font-size:0;">&nbsp;</td></tr>
 `, topSpacer)
 		}
-		for i, tname := range dayTasks {
+		for segIdx, tname := range dayTasks {
 			seg := segHeight(dsum.TaskDurations[tname])
 			if seg <= 0 {
 				continue
 			}
 			fmt.Fprintf(buf, `                            <tr><td style="background:%s;height:%dpx;line-height:0;font-size:0;">&nbsp;</td></tr>
-`, taskColorHex(i, tname), seg)
+`, taskColorHex(segIdx, tname), seg)
+		}
+
+		// Label (weekly: full text; long range: thinned/tick/hidden)
+		var labelHTML string
+		if weeklyMode {
+			labelHTML = fmt.Sprintf(`<div style="%s">%s</div>`, labelStyle, esc(weekdayShort(dsum.Date)))
+		} else {
+			if labelStep != 0 && (dayIdx%labelStep == 0) {
+				if useTicks {
+					labelHTML = `<div style="height:8px;margin:4px auto 0;line-height:0;">
+                                   <div style="width:0;height:8px;border-left:1px solid #aaa;margin:0 auto;"></div>
+                                 </div>`
+				} else {
+					labelHTML = fmt.Sprintf(`<div style="%s">%s</div>`, labelStyle, esc(weekdayShort(dsum.Date)))
+				}
+			} else {
+				labelHTML = fmt.Sprintf(`<div style="%s"></div>`, labelStyle)
+			}
 		}
 
 		fmt.Fprintf(buf, `                          </table>
                         </td></tr>
                       </table>
-                      <div style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding-top:6px;">%s</div>
+                      %s
                     </td>
-`, esc(weekdayShort(dsum.Date)))
+`, labelHTML)
 	}
 
 	fmt.Fprintf(buf, `                  </tr>
@@ -273,7 +337,7 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
         </td>
       </tr>
 
-      <!-- Centered chart wrapper with top-left label for the smoothed chart -->
+      <!-- Centered chart wrapper -->
       <tr>
         <td align="center" style="padding:2px 0 6px 0;">
           <table role="presentation" cellpadding="0" cellspacing="0" width="%d" style="border-collapse:collapse;">
@@ -283,14 +347,14 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
                   <tr valign="bottom">
 `, chartW)
 
-	for i, dsum := range daySummaries {
+	for dayIdx, dsum := range daySummaries {
 		dayPct := 0.0
 		if dsum.TotalDuration > 0 {
 			dayPct = (float64(dsum.TotalActive) / float64(dsum.TotalDuration)) * 100.0
 		}
 		hex := colorToHex(barColorFor(dayPct))
 
-		containerH := smContainerHeights[i]
+		containerH := smContainerHeights[dayIdx]
 		h := segHeight(dsum.SmoothedActiveTime)
 		if h > containerH {
 			h = containerH
@@ -309,9 +373,28 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
                           </table>
                         </td></tr>
                       </table>
-                      <div style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding-top:6px;">%s</div>
+`, pad, barW, containerH, barW, top, hex, h)
+
+		// Label (same rules as above)
+		var labelHTML string
+		if weeklyMode {
+			labelHTML = fmt.Sprintf(`<div style="%s">%s</div>`, labelStyle, esc(weekdayShort(dsum.Date)))
+		} else {
+			if labelStep != 0 && (dayIdx%labelStep == 0) {
+				if useTicks {
+					labelHTML = `<div style="height:8px;margin:4px auto 0;line-height:0;">
+                                   <div style="width:0;height:8px;border-left:1px solid #aaa;margin:0 auto;"></div>
+                                 </div>`
+				} else {
+					labelHTML = fmt.Sprintf(`<div style="%s">%s</div>`, labelStyle, esc(weekdayShort(dsum.Date)))
+				}
+			} else {
+				labelHTML = fmt.Sprintf(`<div style="%s"></div>`, labelStyle)
+			}
+		}
+		fmt.Fprintf(buf, `                      %s
                     </td>
-`, pad, barW, containerH, barW, top, hex, h, esc(weekdayShort(dsum.Date)))
+`, labelHTML)
 	}
 
 	fmt.Fprintf(buf, `                  </tr>
