@@ -1,2 +1,7 @@
 {
+     "logger": {
+        "log_level": 59,
+        "log_dir": "",
+        "use_tid": true
+    }
 }
