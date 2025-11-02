@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"work-tracker/src/pkg/config"
 	"work-tracker/src/pkg/email"
 	er "work-tracker/src/pkg/error"
 	"work-tracker/src/pkg/logger"
+	"work-tracker/src/pkg/report"
 	"work-tracker/src/pkg/util"
 )
 
@@ -66,6 +68,63 @@ func testProvider(subprogram string, flags []string) {
 	e.QuitIf("error")
 }
 
+
+/*
+A shorter version of testProvider.
+Exists to send a report from ./out/report.html.
+
+Currently no text version of the report.
+*/
+func sendReport(subprogram string, flags []string) {
+	// only one provider is needed here, you can set others to dummy values
+	util.CheckIfEnvVarsPresent([]string{
+		"AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_REGION", // amazon ses
+		"MAILGUN_DOMAIN", "MAILGUN_API_KEY", // mailgun
+		"SENDGRID_API_KEY", // sendgrid
+	})
+
+	// common flags
+	subprogramCmd := flag.NewFlagSet(subprogram, flag.ExitOnError)
+	logLevelOverride := subprogramCmd.Int("log-level", -1, "Log level. Default is whatever value is in configuration file. Keep at -1 to not override.")
+	logDirOverride := subprogramCmd.String("log-dir", "", "File directory at which to save log files. Keep empty to use configuration file instead.")
+	configPath := subprogramCmd.String("config", "./cfg/config.json", "Log level. Default is LOG_LEVEL env var value")
+
+	// custom flags
+	provider := subprogramCmd.String("provider", "mailgun", "Provider to use when sending emails")
+	senderAddress := subprogramCmd.String("sender", "", "Sender's address")
+	recipientAddress := subprogramCmd.String("recipient", "", "Recipient's address")
+	emailHtmlFilePath := subprogramCmd.String("html-file", "./out/report.html", "Html of an email")
+
+	// parse and init config
+	er.QuitIfError(subprogramCmd.Parse(flags), "Unable to subprogramCmd.Parse")
+	config.InitializeConfig(*configPath, logger.LogLevel(*logLevelOverride), *logDirOverride)
+
+	util.RequiredFlag(senderAddress, "--sender")
+	util.RequiredFlag(recipientAddress, "--recipient")
+	util.EnsureFlags()
+
+	recipientAddresses := strings.Split(*recipientAddress, ",")
+
+	// read html file
+	htmlFileContentsBytes, err := os.ReadFile(*emailHtmlFilePath)
+	er.QuitIfError(err, fmt.Sprintf("Unable to read file '%s'", *emailHtmlFilePath))
+	htmlFileContents := string(htmlFileContentsBytes)
+	logger.Log(logger.Verbose, logger.DimBlueColor, "Full Email:\n```\n%s\n```", htmlFileContents)
+	// read text file
+
+	reportTitle, e := report.ReadHTMLTitleFromBytes(htmlFileContentsBytes)
+	e.QuitIf("error")
+	subject := fmt.Sprintf(
+		"Work Tracker\u00A0\u00A0\u00A0·\u00A0\u00A0\u00A0%s\u00A0\u00A0\u00A0·\u00A0\u00A0\u00A0%s",
+		reportTitle, time.Now().Format("2006-01-02 (Mon) 15:04:05"),
+	)
+
+	// send email here
+	sendEmails := true
+	e = email.SendMessage(email.Provider(*provider), &sendEmails, *senderAddress, recipientAddresses, subject, "", htmlFileContents, nil)
+	e.QuitIf("error")
+}
+
 func main() {
 	// Check if there are enough arguments
 	if len(os.Args) < 2 {
@@ -79,6 +138,8 @@ func main() {
 	switch subprogram {
 	case "test-provider":
 		testProvider(subprogram, flags)
+	case "report":
+		sendReport(subprogram, flags)
 	default:
 		logger.Log(logger.Error, logger.RedColor, "Unknown subprogram: %s", subprogram)
 		os.Exit(1)
