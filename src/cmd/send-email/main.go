@@ -36,8 +36,8 @@ func testProvider(subprogram string, flags []string) {
 	senderAddress := subprogramCmd.String("sender", "", "Sender's address")
 	recipientAddress := subprogramCmd.String("recipient", "", "Recipient's address")
 	subject := subprogramCmd.String("subject", "Test subject", "Subject of an email")
-	emailTxtFilePath := subprogramCmd.String("html-file", "./tmp/email.txt", "Html of an email, with variables substituted")
-	emailHtmlFilePath := subprogramCmd.String("plain-file", "./tmp/email.html", "Html of an email, with variables substituted")
+	emailHtmlFilePath := subprogramCmd.String("html-file", "./tmp/email.html", "Html of an email")
+	emailTxtFilePath := subprogramCmd.String("plain-file", "./tmp/email.txt", "Plain text of an email")
 
 	// parse and init config
 	er.QuitIfError(subprogramCmd.Parse(flags), "Unable to subprogramCmd.Parse")
