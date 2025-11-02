@@ -130,25 +130,6 @@ func esc(s string) string {
 	return replacer.Replace(s)
 }
 
-
-
-/*
-Format "Weekly Report — 25 Oct 2025 – 31 Oct 2025".
-*/
-func rangeTitle(start, end time.Time) string {
-	if start.Equal(end) {
-		return fmt.Sprintf("Weekly Report — %s", start.Format("02 Jan 2006"))
-	}
-	if start.Year() == end.Year() && start.Month() == end.Month() {
-		return fmt.Sprintf("Weekly Report — %s – %s %d", start.Format("02"), end.Format("02 Jan"), end.Year())
-	}
-	if start.Year() == end.Year() {
-		return fmt.Sprintf("Weekly Report — %s – %s %d", start.Format("02 Jan"), end.Format("02 Jan"), end.Year())
-	}
-	return fmt.Sprintf("Weekly Report — %s – %s", start.Format("02 Jan 2006"), end.Format("02 Jan 2006"))
-}
-
-
 /*
 Enumerate dates.
 */

@@ -147,8 +147,8 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
           <div style="font-family:Arial, sans-serif;font-size:14px;color:#444;padding-bottom:6px;font-weight:bold;">Tasks in period</div>
           <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
 `,
-	rangeTitle(startDate, endDate),
-	rangeTitle(startDate, endDate),
+	reportTitle(startDate, endDate),
+	reportTitle(startDate, endDate),
 	formatDuration(totals.TotalWorked),
 	buildSquares10HTML(avgActivity, activityHex),
 	avgActivity,
