@@ -7,3 +7,4 @@ source "$(dirname "${BASH_SOURCE[0]}")/shared.sh"
 
 cd_to_project_dir
 build_go_binaries report tracker send-email
+install_desktop_files work-tracker report

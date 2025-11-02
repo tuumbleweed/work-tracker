@@ -35,3 +35,48 @@ build_go_binaries() {
     echo "Built $name"
   done
 }
+
+# Install desktop entries by name (with or without .desktop).
+# Usage: install_desktop_files work-tracker report
+#        install_desktop_files work-tracker.desktop report.desktop
+install_desktop_files() {
+  # Resolve target dir (XDG default)
+  local apps_dir="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
+  mkdir -p "$apps_dir"
+
+  local name src base dest any_failed=0
+  for name in "$@"; do
+    # Allow names with or without .desktop
+    if [[ "$name" == *.desktop ]]; then
+      base="$name"
+    else
+      base="$name.desktop"
+    fi
+
+    src="./scripts/$base"
+    dest="$apps_dir/$base"
+
+    if [[ ! -f "$src" ]]; then
+      echo "Missing desktop source: $src"
+      any_failed=1
+      continue
+    fi
+
+    cp -f "$src" "$dest"
+    chmod +x "$dest" 2>/dev/null || true
+
+    # Mark as "trusted" on GNOME/Nautilus if gio is available
+    if command -v gio >/dev/null 2>&1; then
+      gio set "$dest" "metadata::trusted" true 2>/dev/null || true
+    fi
+
+    echo "Installed $base → $dest"
+  done
+
+  # Refresh desktop database if available (harmless if not)
+  if command -v update-desktop-database >/dev/null 2>&1; then
+    update-desktop-database "$apps_dir" >/dev/null 2>&1 || true
+  fi
+
+  return $any_failed
+}
