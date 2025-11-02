@@ -22,8 +22,7 @@ Returns:
 func ReadHTMLTitleFromBytes(data []byte) (title string, e *er.Error) {
 	logger.Log(logger.Notice, logger.BlueColor, "%s (%s %d)", "Reading HTML title from bytes", "len", len(data))
 
-	var reader *bytes.Reader
-	reader = bytes.NewReader(data)
+	reader := bytes.NewReader(data)
 
 	title, e = readHTMLTitle(reader)
 	if e != nil {
@@ -41,8 +40,7 @@ It does not assume <head> placement and tolerates whitespace or multi-chunk text
 func readHTMLTitle(r io.Reader) (title string, e *er.Error) {
 	logger.Log(logger.Debug3, logger.BlueColor, "%s", "Scanning HTML stream for <title>")
 
-	var tokenizer *html.Tokenizer
-	tokenizer = html.NewTokenizer(r)
+	tokenizer := html.NewTokenizer(r)
 
 	for {
 		tokenType := tokenizer.Next()
