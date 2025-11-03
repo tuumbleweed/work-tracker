@@ -28,6 +28,7 @@ sudo apt-get install -y \
 go run fyne.io/demo@latest
 # fyne cli
 go install fyne.io/fyne/v2/cmd/fyne@latest
+export PATH="$HOME/go/bin:$PATH"
 
 # build and install desktop files
 ./scripts/install.sh
