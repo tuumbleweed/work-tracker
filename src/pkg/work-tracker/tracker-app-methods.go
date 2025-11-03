@@ -133,13 +133,15 @@ func (t *TrackerApp) updateInterface() {
 		setRowImportance(tableRow, widget.MediumImportance)
 	}
 
-	var currentTaskNameDisplay string
+	var currentTaskNameDisplay string // this is show above the clock
 	if currentTaskName == "" {
 		if isRunning {
 			currentTaskNameDisplay = "Unassigned Task"
 		} else {
 			currentTaskNameDisplay = "Not Tracking"
 		}
+	} else {
+		currentTaskNameDisplay = currentTaskName
 	}
 
 	activeToday = Clamp(activeToday, 0, workedToday)
