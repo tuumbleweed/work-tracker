@@ -23,6 +23,10 @@ Either way I should separate activity polling from the UI updates.
 - ~~Count time for each task to display in the table~~
 - ~~Update table hours per each task dynamically~~
 - ~~Highlight the row when running a task~~
+- ~~Change the way we measure activity~~
+    - ~~set it to 100% activity so long as time since any key was pressed is lower
+than the activity poll window~~
+- Separate UI ticks from activity ticks
 - Organize UI code in a better way, currently a mess, especially button handling.
 
 ## Reporting
