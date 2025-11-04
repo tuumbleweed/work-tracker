@@ -19,7 +19,7 @@ func main() {
 	logDirOverride := flag.String("log-dir", "", "File directory at which to save log files. Keep empty to use configuration file instead.")
 	configPath := flag.String("config", "./cfg/config.json", "Path to your configuration file.")
 	// program's custom flags
-	uiInterval := flag.Duration("tick-interval", 500*time.Millisecond, "UI and activity update period (e.g. 2m, 10m, 1h)")
+	uiInterval := flag.Duration("tick-interval", 1*time.Second, "UI and activity update period (e.g. 2m, 10m, 1h)")
 	chunkInterval := flag.Duration("flush-interval", 10*time.Second, "Autosave period (e.g. 2m, 10m, 1h)")
 	workDir := flag.String("work-dir", "./out", "Directory for daily JSONL files")
 	tasksFilePath := flag.String("tasks", "./cfg/tasks.json", "File with tasks and their descriptions")

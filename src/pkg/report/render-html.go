@@ -333,7 +333,7 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
       <!-- Activity × Time -->
       <tr>
         <td align="center" style="padding:15px 0 10px 0;">
-          <div style="font-family:Arial, sans-serif;color:#222;font-size:14px;font-weight:bold;">Activity × Time</div>
+          <div style="font-family:Arial, sans-serif;color:#222;font-size:14px;font-weight:bold;">Activity × Time (%s baseline)</div>
         </td>
       </tr>
 
@@ -345,7 +345,7 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
               <td>
                 <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 auto;">
                   <tr valign="bottom">
-`, chartW)
+`, esc(formatDuration(barRef)), chartW)
 
 	for dayIdx, dsum := range daySummaries {
 		dayPct := 0.0
@@ -411,16 +411,16 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
           <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
             <tr>
               <td style="background:%[1]s;width:10px;height:10px;line-height:0;font-size:0;">&nbsp;</td>
-              <td style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding:0 12px 0 6px;">%[5]s × 0%%</td>
+              <td style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding:0 12px 0 6px;">0%%</td>
 
               <td style="background:%[2]s;width:10px;height:10px;line-height:0;font-size:0;">&nbsp;</td>
-              <td style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding:0 12px 0 6px;">%[5]s × 50%%</td>
+              <td style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding:0 12px 0 6px;">50%%</td>
 
               <td style="background:%[3]s;width:10px;height:10px;line-height:0;font-size:0;">&nbsp;</td>
-              <td style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding:0 12px 0 6px;">%[5]s × 75%%</td>
+              <td style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding:0 12px 0 6px;">75%%</td>
 
               <td style="background:%[4]s;width:10px;height:10px;line-height:0;font-size:0;">&nbsp;</td>
-              <td style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding:0 0 0 6px;">%[5]s × 100%%</td>
+              <td style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding:0 0 0 6px;">100%%</td>
             </tr>
           </table>
         </td>
@@ -441,5 +441,5 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 
   </body>
 </html>
-`, hex0, hex50, hex75, hex100, esc(formatDuration(barRef)))
+`, hex0, hex50, hex75, hex100)
 }
