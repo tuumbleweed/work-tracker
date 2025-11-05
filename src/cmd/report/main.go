@@ -46,6 +46,6 @@ func main() {
 
 	// Open in Chrome
 	logger.Log(logger.Notice, logger.BoldBlueColor, "%s a file '%s' with %s", "Opening", *flagOutputPath, "google-chrome")
-	err := exec.Command("google-chrome", *flagOutputPath).Start()
+	err := exec.Command("google-chrome", "--new-window", *flagOutputPath).Start()
 	er.QuitIfError(err, "Unable to open html report with google chrome")
 }
