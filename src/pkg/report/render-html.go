@@ -259,7 +259,7 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 		fmt.Fprintf(buf, `                    <!-- Day bar -->
                     <td align="center" style="padding:0 %dpx;">
                       <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-                        <tr><td style="background:#e0e0e0;width:%dpx;height:%dpx;line-height:0;font-size:0;">
+                        <tr><td style="background:#e0e0e0;position:relative;width:%dpx;height:%dpx;line-height:0;font-size:0;">
                           <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:%dpx;">
 `, pad, barW, containerH, barW)
 
@@ -275,6 +275,16 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 			fmt.Fprintf(buf, `                            <tr><td style="background:%s;height:%dpx;line-height:0;font-size:0;">&nbsp;</td></tr>
 `, taskColorHex(segIdx, tname), seg)
 		}
+
+		// Hours label inside bar (bottom-center)
+		hoursLabel := fmt.Sprintf("%.1fh", dsum.TotalDuration.Hours())
+		fmt.Fprintf(buf, `                          </table>
+                          <div style="position:absolute;left:0;right:0;bottom:2px;text-align:center;">
+                            <span style="font-family:Arial, sans-serif;font-size:11px;color:#000;">%s</span>
+                          </div>
+                        </td></tr>
+                      </table>
+`, esc(hoursLabel))
 
 		// Label (weekly: full text; long range: thinned/tick/hidden)
 		var labelHTML string
@@ -294,10 +304,7 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 			}
 		}
 
-		fmt.Fprintf(buf, `                          </table>
-                        </td></tr>
-                      </table>
-                      %s
+		fmt.Fprintf(buf, `                      %s
                     </td>
 `, labelHTML)
 	}
@@ -364,16 +371,22 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 			top = 0
 		}
 
+		// Activity % label for this day
+		pctLabel := fmt.Sprintf("%.0f%%", dayPct)
+
 		fmt.Fprintf(buf, `                    <td align="center" style="padding:0 %dpx;">
                       <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-                        <tr><td style="background:#e0e0e0;width:%dpx;height:%dpx;line-height:0;font-size:0;">
+                        <tr><td style="background:#e0e0e0;position:relative;width:%dpx;height:%dpx;line-height:0;font-size:0;">
                           <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:%dpx;">
                             <tr><td style="height:%dpx;line-height:0;font-size:0;">&nbsp;</td></tr>
                             <tr><td style="background:%s;height:%dpx;line-height:0;font-size:0;">&nbsp;</td></tr>
                           </table>
+                          <div style="position:absolute;left:0;right:0;bottom:2px;text-align:center;">
+                            <span style="font-family:Arial, sans-serif;font-size:11px;color:#000;">%s</span>
+                          </div>
                         </td></tr>
                       </table>
-`, pad, barW, containerH, barW, top, hex, h)
+`, pad, barW, containerH, barW, top, hex, h, esc(pctLabel))
 
 		// Label (same rules as above)
 		var labelHTML string
