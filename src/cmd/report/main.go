@@ -3,11 +3,9 @@ package main
 
 import (
 	"flag"
-	"os/exec"
 	"time"
 
 	"work-tracker/src/pkg/config"
-	er "work-tracker/src/pkg/error"
 	"work-tracker/src/pkg/logger"
 	"work-tracker/src/pkg/report"
 	"work-tracker/src/pkg/util"
@@ -45,7 +43,6 @@ func main() {
 	e.QuitIf("error")
 
 	// Open in Chrome
-	logger.Log(logger.Notice, logger.BoldBlueColor, "%s a file '%s' with %s", "Opening", *flagOutputPath, "google-chrome")
-	err := exec.Command("google-chrome", "--new-window", *flagOutputPath).Start()
-	er.QuitIfError(err, "Unable to open html report with google chrome")
+	e = util.OpenInChrome(*flagOutputPath)
+	e.QuitIf("error")
 }
