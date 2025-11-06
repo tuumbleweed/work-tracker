@@ -46,6 +46,7 @@ func readDayFile(filePath string, date time.Time, smooth float64) (sum DaySummar
 	sc.Buffer(buf, 2*1024*1024)
 
 	lineNumber := 0
+	sum.TaskDurations["Unassigned Time"] = 1 * time.Nanosecond // add this to have it take first (gray) color always, even if not present
 	for sc.Scan() {
 		line := strings.TrimSpace(sc.Text())
 		lineNumber++
