@@ -106,6 +106,7 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 		nDays = 1
 	}
 	weeklyMode := nDays <= 14
+	showBarLabels := weeklyMode // NEW: hide in-bar labels when period > 2 weeks
 
 	// Outputs we’ll use below
 	barW := 28
@@ -276,15 +277,21 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 `, taskColorHex(segIdx, tname), seg)
 		}
 
-		// Hours label inside bar (bottom-center)
+		// Hours label inside bar (bottom-center) — now conditional
 		hoursLabel := fmt.Sprintf("%.1fh", dsum.TotalDuration.Hours())
+		hoursLabelHTML := ""
+		if showBarLabels {
+			hoursLabelHTML = fmt.Sprintf(
+				`<div style="position:absolute;left:0;right:0;bottom:2px;text-align:center;">
+                   <span style="font-family:Arial, sans-serif;font-size:11px;color:#000;">%s</span>
+                 </div>`, esc(hoursLabel))
+		}
+
 		fmt.Fprintf(buf, `                          </table>
-                          <div style="position:absolute;left:0;right:0;bottom:2px;text-align:center;">
-                            <span style="font-family:Arial, sans-serif;font-size:11px;color:#000;">%s</span>
-                          </div>
+                          %s
                         </td></tr>
                       </table>
-`, esc(hoursLabel))
+`, hoursLabelHTML)
 
 		// Label (weekly: full text; long range: thinned/tick/hidden)
 		var labelHTML string
@@ -371,8 +378,15 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 			top = 0
 		}
 
-		// Activity % label for this day
+		// Activity % label for this day — now conditional
 		pctLabel := fmt.Sprintf("%.0f%%", dayPct)
+		pctLabelHTML := ""
+		if showBarLabels {
+			pctLabelHTML = fmt.Sprintf(
+				`<div style="position:absolute;left:0;right:0;bottom:2px;text-align:center;">
+                   <span style="font-family:Arial, sans-serif;font-size:11px;color:#000;">%s</span>
+                 </div>`, esc(pctLabel))
+		}
 
 		fmt.Fprintf(buf, `                    <td align="center" style="padding:0 %dpx;">
                       <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
@@ -381,12 +395,10 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
                             <tr><td style="height:%dpx;line-height:0;font-size:0;">&nbsp;</td></tr>
                             <tr><td style="background:%s;height:%dpx;line-height:0;font-size:0;">&nbsp;</td></tr>
                           </table>
-                          <div style="position:absolute;left:0;right:0;bottom:2px;text-align:center;">
-                            <span style="font-family:Arial, sans-serif;font-size:11px;color:#000;">%s</span>
-                          </div>
+                          %s
                         </td></tr>
                       </table>
-`, pad, barW, containerH, barW, top, hex, h, esc(pctLabel))
+`, pad, barW, containerH, barW, top, hex, h, pctLabelHTML)
 
 		// Label (same rules as above)
 		var labelHTML string
