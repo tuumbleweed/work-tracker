@@ -85,7 +85,6 @@ func (t *TrackerApp) makeTasksUI(tasks []Task) *fyne.Container {
 					// make sure to update t.TaskRunStart so that new task does not receive additional time
 					taskRunStart = time.Now()
 					newTaskName = task.Name
-
 					tl.Log(tl.Info, palette.Cyan, "%s. Previous: '%s', New: '%s'", "Switching tasks", previousTaskName, newTaskName)
 				} else {
 					t.onButtonTapped()
@@ -103,6 +102,9 @@ func (t *TrackerApp) makeTasksUI(tasks []Task) *fyne.Container {
 				tl.Log(tl.Info, palette.Cyan, "%s. Previous: '%s', New: '%s'", "Startng new task", previousTaskName, newTaskName)
 			}
 
+			// refresh state and then flush
+			t.refreshState()
+			t.flushChunkIfRunning()
 			// now set t.CurrentTaskName to newTaskName
 			t.Mutex.Lock()
 			t.CurrentTaskName = newTaskName

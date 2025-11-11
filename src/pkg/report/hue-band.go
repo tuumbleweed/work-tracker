@@ -53,7 +53,6 @@ func taskColorHex(id int, task string) string {
 	return fmt.Sprintf("#%02X%02X%02X", r, g, b)
 }
 
-
 // HSL -> RGB helpers
 func hslToRGB(h, s, l float64) (uint8, uint8, uint8) {
 	if s == 0 {

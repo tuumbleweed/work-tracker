@@ -7,7 +7,7 @@
 - ~~Change the way we measure activity~~
     - ~~set it to 100% activity so long as time since any key was pressed is lower
 than the activity poll window~~
-- Flush when switching between tasks
+- ~~Flush when switching between tasks~~
 - Separate UI ticks from activity ticks
 - Organize UI code in a better way, currently a mess, especially button handling.
 
