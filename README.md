@@ -6,7 +6,7 @@ Local-first by default; optionally email reports via Mailgun, SendGrid, or Amazo
 > Installation & setup: see **[INSTALL.md](./INSTALL.md)**
 
 <p align="center">
-  <img src="./pictures/work-tracker-app.png" alt="Work Tracker — main screen" width="720">
+  <img src="./pictures/work-tracker-app-running.png" alt="Work Tracker — main screen" width="720">
 </p>
 
 ## Features
