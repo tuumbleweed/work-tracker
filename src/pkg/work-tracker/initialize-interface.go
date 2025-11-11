@@ -7,15 +7,16 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
-	er "work-tracker/src/pkg/error"
-	"work-tracker/src/pkg/logger"
+	tl "github.com/tuumbleweed/tintlog/logger"
+	"github.com/tuumbleweed/tintlog/palette"
+	"github.com/tuumbleweed/xerr"
 )
 
 // initializeInterface sets up the Fyne app/window and constructs the UI widgets.
 // It does NOT wire handlers, lay out content, or start tickers.
 // Call t.initUI() later to compose these widgets into the window.
-func initializeInterface(appId, windowTitle, tasksFilePath string) (t *TrackerApp, e *er.Error) {
-	logger.Log(logger.Notice, logger.BoldBlueColor, "%s for '%s'", "Initializing interface", windowTitle)
+func initializeInterface(appId, windowTitle, tasksFilePath string) (t *TrackerApp, e *xerr.Error) {
+	tl.Log(tl.Notice, palette.BlueBold, "%s for '%s'", "Initializing interface", windowTitle)
 
 	// set up the app
 	t = &TrackerApp{}
@@ -65,6 +66,6 @@ func initializeInterface(appId, windowTitle, tasksFilePath string) (t *TrackerAp
 	}
 	t.TasksContainer = t.makeTasksUI(tasks)
 
-	logger.Log(logger.Notice1, logger.BoldGreenColor, "%s for '%s'", "Initialized interface", windowTitle)
+	tl.Log(tl.Notice1, palette.GreenBold, "%s for '%s'", "Initialized interface", windowTitle)
 	return t, nil
 }

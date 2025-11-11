@@ -4,7 +4,8 @@ import (
 	"os"
 	"strings"
 
-	"work-tracker/src/pkg/logger"
+	tl "github.com/tuumbleweed/tintlog/logger"
+	"github.com/tuumbleweed/tintlog/palette"
 )
 
 var RequiredFlags = map[*string]string{}
@@ -19,7 +20,7 @@ func EnsureFlags() {
 	missing := false
 	for flagPointer, cliName := range RequiredFlags {
 		if flagPointer == nil || strings.TrimSpace(*flagPointer) == "" {
-			logger.Log(logger.Warning, logger.BoldYellowColor, "%s parameter is %s", cliName, "required")
+			tl.Log(tl.Warning, palette.YellowBold, "%s parameter is %s", cliName, "required")
 			missing = true
 		}
 	}

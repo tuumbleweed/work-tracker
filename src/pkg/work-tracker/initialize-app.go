@@ -4,18 +4,19 @@ import (
 	"maps"
 	"time"
 
-	er "work-tracker/src/pkg/error"
-	"work-tracker/src/pkg/logger"
+	tl "github.com/tuumbleweed/tintlog/logger"
+	"github.com/tuumbleweed/tintlog/palette"
+	"github.com/tuumbleweed/xerr"
 )
 
-func InitializeTrackerApp(appId, windowTitle, workDir, tasksFilePath string, tickInterval, flushInterval time.Duration) (trackerApp *TrackerApp, e *er.Error) {
-	logger.Log(
-		logger.Important, logger.BoldBlueColor,
+func InitializeTrackerApp(appId, windowTitle, workDir, tasksFilePath string, tickInterval, flushInterval time.Duration) (trackerApp *TrackerApp, e *xerr.Error) {
+	tl.Log(
+		tl.Important, palette.BlueBold,
 		"%s tracker app. App id: '%s', window title: '%s', work dir: '%s', tick interval: %s, flush interval: '%s'",
 		"Initializing", appId, windowTitle, workDir, tickInterval, flushInterval,
 	)
 
-	trackerApp ,e = initializeInterface(appId, windowTitle, tasksFilePath)
+	trackerApp, e = initializeInterface(appId, windowTitle, tasksFilePath)
 	if e != nil {
 		return trackerApp, e
 	}
@@ -43,13 +44,13 @@ func InitializeTrackerApp(appId, windowTitle, workDir, tasksFilePath string, tic
 	trackerApp.done = make(chan struct{})
 	trackerApp.LastTickStart = time.Now()
 
-	logger.Log(
-		logger.Important1, logger.BoldGreenColor,
+	tl.Log(
+		tl.Important1, palette.GreenBold,
 		"%s tracker app. App id: '%s', window title: '%s', work dir: '%s', tick interval: %s, flush interval: '%s'",
 		"Initialized", appId, windowTitle, workDir, tickInterval, flushInterval,
 	)
-	logger.Log(
-		logger.Notice, logger.BoldCyanColor,
+	tl.Log(
+		tl.Notice, palette.CyanBold,
 		"\nWorkDir: '%s'\nCurrendDateID: '%s'\nCurrentFilePath: '%s'\nWorkedToday: '%s'\nActiveToday: '%s'",
 		trackerApp.Workdir, trackerApp.CurrentDateID, trackerApp.CurrentFilePath,
 		trackerApp.WorkedToday, trackerApp.ActiveToday,

@@ -6,15 +6,16 @@ import (
 	"sort"
 	"time"
 
-	er "work-tracker/src/pkg/error"
-	"work-tracker/src/pkg/logger"
+	tl "github.com/tuumbleweed/tintlog/logger"
+	"github.com/tuumbleweed/tintlog/palette"
+	"github.com/tuumbleweed/xerr"
 )
 
 /*
 Build the report: read files, aggregate, render HTML, write to disk.
 */
-func BuildReport(inputDir string, startDate, endDate time.Time, outPath string, barRef time.Duration, smooth float64) (e *er.Error) {
-	logger.Log(logger.Notice, logger.BlueColor, "%s files from '%s' for '%s'..'%s'", "Reading", inputDir, startDate.Format("02-01-2006"), endDate.Format("02-01-2006"))
+func BuildReport(inputDir string, startDate, endDate time.Time, outPath string, barRef time.Duration, smooth float64) (e *xerr.Error) {
+	tl.Log(tl.Notice, palette.Blue, "%s files from '%s' for '%s'..'%s'", "Reading", inputDir, startDate.Format("02-01-2006"), endDate.Format("02-01-2006"))
 
 	dates := enumerateDates(startDate, endDate)
 	daySummaries := make([]DaySummary, 0, len(dates))
@@ -54,19 +55,19 @@ func BuildReport(inputDir string, startDate, endDate time.Time, outPath string, 
 
 	err := os.WriteFile(outPath, buf.Bytes(), 0o644)
 	if err != nil {
-		e = er.NewErrorECOL(err, "failed to write HTML report", "path", outPath)
+		e = xerr.NewErrorECOL(err, "failed to write HTML report", "path", outPath)
 		return e
 	}
-	logger.Log(logger.Notice, logger.GreenColor, "%s report to '%s' (%s, %s days)", "Wrote", outPath, formatDuration(totals.TotalWorked), len(daySummaries))
+	tl.Log(tl.Notice, palette.Green, "%s report to '%s' (%s, %s days)", "Wrote", outPath, formatDuration(totals.TotalWorked), len(daySummaries))
 	return nil
 }
 
 // resolveRange loads the TZ and determines [startDate, endDate] from flags.
-// Returns (*time.Location, startDate, endDate, *er.Error).
-func ResolveRange(flagTZ, flagStart, flagEnd string) (*time.Location, time.Time, time.Time, *er.Error) {
+// Returns (*time.Location, startDate, endDate, *xerr.Error).
+func ResolveRange(flagTZ, flagStart, flagEnd string) (*time.Location, time.Time, time.Time, *xerr.Error) {
 	loc, tzErr := time.LoadLocation(flagTZ)
 	if tzErr != nil {
-		return nil, time.Time{}, time.Time{}, er.NewErrorECOL(tzErr, "failed to load timezone", "tz", flagTZ)
+		return nil, time.Time{}, time.Time{}, xerr.NewErrorECOL(tzErr, "failed to load timezone", "tz", flagTZ)
 	}
 
 	var (
@@ -82,25 +83,25 @@ func ResolveRange(flagTZ, flagStart, flagEnd string) (*time.Location, time.Time,
 	case flagStart != "" && flagEnd == "":
 		startDate, err = parseDMY(flagStart, loc)
 		if err != nil {
-			return loc, time.Time{}, time.Time{}, er.NewErrorECOL(err, "failed to parse start date", "start", flagStart)
+			return loc, time.Time{}, time.Time{}, xerr.NewErrorECOL(err, "failed to parse start date", "start", flagStart)
 		}
 		endDate = startDate
 
 	case flagStart == "" && flagEnd != "":
 		endDate, err = parseDMY(flagEnd, loc)
 		if err != nil {
-			return loc, time.Time{}, time.Time{}, er.NewErrorECOL(err, "failed to parse end date", "end", flagEnd)
+			return loc, time.Time{}, time.Time{}, xerr.NewErrorECOL(err, "failed to parse end date", "end", flagEnd)
 		}
 		startDate = endDate
 
 	default:
 		startDate, err = parseDMY(flagStart, loc)
 		if err != nil {
-			return loc, time.Time{}, time.Time{}, er.NewErrorECOL(err, "failed to parse start date", "start", flagStart)
+			return loc, time.Time{}, time.Time{}, xerr.NewErrorECOL(err, "failed to parse start date", "start", flagStart)
 		}
 		endDate, err = parseDMY(flagEnd, loc)
 		if err != nil {
-			return loc, time.Time{}, time.Time{}, er.NewErrorECOL(err, "failed to parse end date", "end", flagEnd)
+			return loc, time.Time{}, time.Time{}, xerr.NewErrorECOL(err, "failed to parse end date", "end", flagEnd)
 		}
 	}
 

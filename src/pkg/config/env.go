@@ -1,16 +1,16 @@
-package util
+package config
 
 import (
 	"fmt"
 	"os"
 
+	"github.com/tuumbleweed/xerr"
 	tl "github.com/tuumbleweed/tintlog/logger"
 	"github.com/tuumbleweed/tintlog/palette"
-	"github.com/tuumbleweed/xerr"
 )
 
 // Check if all required environment variables are present. If not all present - print warinig and quit.
-func CheckIfEnvVarsPresent(listOfEnvVars []string) {
+func CheckIfEnvVarsPresent(listOfEnvVars ...string) {
 	for _, envVarName := range listOfEnvVars {
 		if os.Getenv(envVarName) == "" {
 			tl.Log(tl.Warning, palette.Yellow, "Env var. '%s' is not set. %s", envVarName, "Check your environment variables")

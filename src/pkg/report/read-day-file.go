@@ -8,14 +8,15 @@ import (
 	"strings"
 	"time"
 
-	er "work-tracker/src/pkg/error"
-	"work-tracker/src/pkg/logger"
+	tl "github.com/tuumbleweed/tintlog/logger"
+	"github.com/tuumbleweed/tintlog/palette"
+	"github.com/tuumbleweed/xerr"
 )
 
 /*
 Read a single day file into a DaySummary. Missing file => empty summary (no error).
 */
-func readDayFile(filePath string, date time.Time, smooth float64) (sum DaySummary, e *er.Error) {
+func readDayFile(filePath string, date time.Time, smooth float64) (sum DaySummary, e *xerr.Error) {
 	sum = DaySummary{
 		Date:               date,
 		TaskDurations:      make(map[string]time.Duration),
@@ -27,16 +28,16 @@ func readDayFile(filePath string, date time.Time, smooth float64) (sum DaySummar
 	_, statErr := os.Stat(filePath)
 	if statErr != nil {
 		if os.IsNotExist(statErr) {
-			logger.Log(logger.Notice, logger.CyanColor, "%s missing day file '%s' (treated as 0)", "Skipping", filePath)
+			tl.Log(tl.Notice, palette.Cyan, "%s missing day file '%s' (treated as 0)", "Skipping", filePath)
 			return sum, nil
 		}
-		e = er.NewErrorECOL(statErr, "unable to stat day file", "path", filePath)
+		e = xerr.NewErrorECOL(statErr, "unable to stat day file", "path", filePath)
 		return sum, e
 	}
 
 	f, openErr := os.Open(filePath)
 	if openErr != nil {
-		e = er.NewErrorECOL(openErr, "unable to open day file", "path", filePath)
+		e = xerr.NewErrorECOL(openErr, "unable to open day file", "path", filePath)
 		return sum, e
 	}
 	defer f.Close()
@@ -56,11 +57,11 @@ func readDayFile(filePath string, date time.Time, smooth float64) (sum DaySummar
 		var ch Chunk
 		uErr := json.Unmarshal([]byte(line), &ch)
 		if uErr != nil {
-			logger.Log(logger.Notice, logger.PurpleColor, "%s malformed JSON in '%s' line %d", "Skipping", filePath, lineNumber)
+			tl.Log(tl.Notice, palette.Purple, "%s malformed JSON in '%s' line %d", "Skipping", filePath, lineNumber)
 			continue
 		}
 		if !ch.FinishedAt.After(ch.StartedAt) {
-			logger.Log(logger.Notice, logger.PurpleColor, "%s bad chunk time window in '%s' line %d", "Skipping", filePath, lineNumber)
+			tl.Log(tl.Notice, palette.Purple, "%s bad chunk time window in '%s' line %d", "Skipping", filePath, lineNumber)
 			continue
 		}
 		dur := ch.FinishedAt.Sub(ch.StartedAt)
@@ -89,13 +90,12 @@ func readDayFile(filePath string, date time.Time, smooth float64) (sum DaySummar
 	}
 	sErr := sc.Err()
 	if sErr != nil {
-		e = er.NewErrorECML(sErr, "scanner error while reading day file", "line",
+		e = xerr.NewErrorECML(sErr, "scanner error while reading day file", "line",
 			map[string]any{"path": filePath, "last_line": lineNumber})
 		return sum, e
 	}
 	return sum, nil
 }
-
 
 /*
 Smooth activity factor f∈[0,1] by exponent α = 1 - smooth (smooth∈[0,1]).

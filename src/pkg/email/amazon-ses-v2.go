@@ -15,7 +15,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sesv2"
 	"github.com/aws/aws-sdk-go-v2/service/sesv2/types"
 
-	"work-tracker/src/pkg/logger"
+	tl "github.com/tuumbleweed/tintlog/logger"
+	"github.com/tuumbleweed/tintlog/palette"
 )
 
 const CharSet = "UTF-8"
@@ -27,8 +28,8 @@ func SendMessageAmazonSESV2(
 	subject, plainTextContent, htmlContent string, attachments []Attachment,
 ) (err error, errMsg string) {
 	logWho := strings.Join(to, ", ")
-	logger.Log(
-		logger.Info, logger.BlueColor, "Sending an email to '%s' using %s provider",
+	tl.Log(
+		tl.Info, palette.Blue, "Sending an email to '%s' using %s provider",
 		logWho, "Amazon SES (v2)",
 	)
 
@@ -65,8 +66,8 @@ func SendMessageAmazonSESV2(
 		if err != nil {
 			return err, fmt.Sprintf("Failed to send a raw email with attachments to '%s' using %s", logWho, "Amazon SES (v2)")
 		}
-		logger.Log(logger.Info1, logger.GreenColor, "Email sent. MessageId='%s'", aws.ToString(out.MessageId))
-		logger.Log(logger.Info1, logger.GreenColor, "Email sent successfully to '%s' using %s", logWho, "Amazon SES (v2)")
+		tl.Log(tl.Info1, palette.Green, "Email sent. MessageId='%s'", aws.ToString(out.MessageId))
+		tl.Log(tl.Info1, palette.Green, "Email sent successfully to '%s' using %s", logWho, "Amazon SES (v2)")
 		return nil, ""
 	}
 
@@ -101,8 +102,8 @@ func SendMessageAmazonSESV2(
 	if err != nil {
 		return err, fmt.Sprintf("Failed to send an email to '%s' using %s", logWho, "Amazon SES (v2)")
 	}
-	logger.Log(logger.Info1, logger.GreenColor, "Email sent. MessageId='%s'", aws.ToString(out.MessageId))
-	logger.Log(logger.Info1, logger.GreenColor, "Sent   an email to '%s' using %s provider", logWho, "Amazon SES (v2)")
+	tl.Log(tl.Info1, palette.Green, "Email sent. MessageId='%s'", aws.ToString(out.MessageId))
+	tl.Log(tl.Info1, palette.Green, "Sent   an email to '%s' using %s provider", logWho, "Amazon SES (v2)")
 	return nil, ""
 }
 
@@ -114,8 +115,8 @@ func SendMessageAmazonSESRawV2(
 	subject, plainTextContent, htmlContent, unsubURL string, attachments []Attachment,
 ) (err error, errMsg string) {
 	logWho := strings.Join(to, ", ")
-	logger.Log(
-		logger.Info, logger.BlueColor, "Sending a raw email to '%s' using %s provider",
+	tl.Log(
+		tl.Info, palette.Blue, "Sending a raw email to '%s' using %s provider",
 		logWho, "Amazon SES (v2)",
 	)
 
@@ -149,8 +150,8 @@ func SendMessageAmazonSESRawV2(
 	if err != nil {
 		return err, fmt.Sprintf("Failed to send a raw email to '%s' using %s", logWho, "Amazon SES (v2)")
 	}
-	logger.Log(logger.Info1, logger.GreenColor, "Email sent. MessageId='%s'", aws.ToString(out.MessageId))
-	logger.Log(logger.Info1, logger.GreenColor, "Email sent successfully to '%s' using %s", logWho, "Amazon SES (v2)")
+	tl.Log(tl.Info1, palette.Green, "Email sent. MessageId='%s'", aws.ToString(out.MessageId))
+	tl.Log(tl.Info1, palette.Green, "Email sent successfully to '%s' using %s", logWho, "Amazon SES (v2)")
 	return nil, ""
 }
 
@@ -245,8 +246,8 @@ func buildRawMixedEmail(
 		buf.WriteString("Content-Transfer-Encoding: base64\r\n\r\n")
 		buf.WriteString(chunkBase64(att.Data))
 		buf.WriteString("\r\n")
-		logger.Log(
-			logger.Detailed, logger.DimCyanColor,
+		tl.Log(
+			tl.Detailed, palette.CyanDim,
 			"Attached file '%s' (%d bytes, type '%s')", att.Filename, len(att.Data), mimeType,
 		)
 	}

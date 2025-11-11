@@ -4,7 +4,6 @@ import (
 	"image/color"
 	"maps"
 	"time"
-	"work-tracker/src/pkg/logger"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -12,6 +11,9 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+
+	tl "github.com/tuumbleweed/tintlog/logger"
+	"github.com/tuumbleweed/tintlog/palette"
 )
 
 // column widths (px) – tweak to taste
@@ -84,11 +86,11 @@ func (t *TrackerApp) makeTasksUI(tasks []Task) *fyne.Container {
 					taskRunStart = time.Now()
 					newTaskName = task.Name
 
-					logger.Log(logger.Info, logger.CyanColor, "%s. Previous: '%s', New: '%s'", "Switching tasks", previousTaskName, newTaskName)
+					tl.Log(tl.Info, palette.Cyan, "%s. Previous: '%s', New: '%s'", "Switching tasks", previousTaskName, newTaskName)
 				} else {
 					t.onButtonTapped()
 					newTaskName = "" // reset newTaskName on stopping
-					logger.Log(logger.Info, logger.CyanColor, "%s. Previous: '%s', New: '%s'", "Stopping task", previousTaskName, newTaskName)
+					tl.Log(tl.Info, palette.Cyan, "%s. Previous: '%s', New: '%s'", "Stopping task", previousTaskName, newTaskName)
 				}
 			} else {
 				// it's not running which means we are starting a new task
@@ -98,7 +100,7 @@ func (t *TrackerApp) makeTasksUI(tasks []Task) *fyne.Container {
 				t.onButtonTapped()
 				showRunning(rowPlayButton)
 				newTaskName = task.Name
-				logger.Log(logger.Info, logger.CyanColor, "%s. Previous: '%s', New: '%s'", "Startng new task", previousTaskName, newTaskName)
+				tl.Log(tl.Info, palette.Cyan, "%s. Previous: '%s', New: '%s'", "Startng new task", previousTaskName, newTaskName)
 			}
 
 			// now set t.CurrentTaskName to newTaskName

@@ -7,7 +7,8 @@ import (
 
 	"github.com/mailgun/mailgun-go/v4"
 
-	"work-tracker/src/pkg/logger"
+	tl "github.com/tuumbleweed/tintlog/logger"
+	"github.com/tuumbleweed/tintlog/palette"
 )
 
 /*
@@ -37,7 +38,7 @@ func SendMessageMailgunWithUnsubUrlAndAttachments(
 		toWhomString = "(no To recipients)"
 	}
 
-	logger.Log(logger.Info, logger.BlueColor, "Sending an email to '%s' using %s provider", toWhomString, "mailgun")
+	tl.Log(tl.Info, palette.Blue, "Sending an email to '%s' using %s provider", toWhomString, "mailgun")
 
 	mg := mailgun.NewMailgun(mailGunDomain, apiKey)
 
@@ -68,9 +69,9 @@ func SendMessageMailgunWithUnsubUrlAndAttachments(
 	// Optional unsubscribe headers.
 	if unsubUrl != "" {
 		message.AddHeader("List-Unsubscribe", fmt.Sprintf("<%s>", unsubUrl))
-		logger.Log(logger.Detailed, logger.BlueColor, "Set %s for an email to '%s'", "List-Unsubscribe header", unsubUrl)
+		tl.Log(tl.Detailed, palette.Blue, "Set %s for an email to '%s'", "List-Unsubscribe header", unsubUrl)
 		message.AddHeader("List-Unsubscribe-Post", "List-Unsubscribe=One-Click")
-		logger.Log(logger.Detailed, logger.BlueColor, "Set %s for an email to '%s'", "List-Unsubscribe-Post header", "List-Unsubscribe=One-Click")
+		tl.Log(tl.Detailed, palette.Blue, "Set %s for an email to '%s'", "List-Unsubscribe-Post header", "List-Unsubscribe=One-Click")
 	}
 
 	// Add attachments (if any).
@@ -85,7 +86,7 @@ func SendMessageMailgunWithUnsubUrlAndAttachments(
 			// Mailgun SDK convenience: send from memory buffer.
 			message.AddBufferAttachment(att.Filename, att.Data)
 		}
-		logger.Log(logger.Verbose, logger.CyanColor, "Attached %s file(s) for '%s'", len(attachments), toWhomString)
+		tl.Log(tl.Verbose, palette.Cyan, "Attached %s file(s) for '%s'", len(attachments), toWhomString)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -96,11 +97,11 @@ func SendMessageMailgunWithUnsubUrlAndAttachments(
 		return sendErr, fmt.Sprintf("Failed to send an email to '%s' using %s", toWhomString, "mailgun")
 	}
 
-	logger.Log(logger.Verbose, logger.GreenColor, "Mailgun response ID: %s", id)
-	logger.Log(logger.Verbose, logger.GreenColor, "Mailgun response message: %s", response)
+	tl.Log(tl.Verbose, palette.Green, "Mailgun response ID: %s", id)
+	tl.Log(tl.Verbose, palette.Green, "Mailgun response message: %s", response)
 
 	if response == "Queued. Thank you." {
-		logger.Log(logger.Info1, logger.GreenColor, "Email sent successfully to '%s' using %s", toWhomString, "mailgun")
+		tl.Log(tl.Info1, palette.Green, "Email sent successfully to '%s' using %s", toWhomString, "mailgun")
 		return nil, ""
 	}
 

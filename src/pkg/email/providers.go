@@ -5,7 +5,8 @@ import (
 	"slices"
 	"time"
 
-	er "work-tracker/src/pkg/error"
+	"github.com/tuumbleweed/xerr"
+
 )
 
 const timeout time.Duration = 30*time.Second
@@ -23,7 +24,7 @@ var AllowedProviders = []Provider{ProviderMailgun, ProviderSendGrid, ProviderAma
 
 // IsValidProvider checks if the given string matches a known provider.
 // Returns error if not valid
-func IsValidProvider(provider Provider) (e *er.Error) {
+func IsValidProvider(provider Provider) (e *xerr.Error) {
 	if slices.Contains(AllowedProviders, provider) {
 		return nil
 	}
@@ -33,7 +34,7 @@ func IsValidProvider(provider Provider) (e *er.Error) {
 		allowed[i] = string(prov)
 	}
 
-	return er.NewError(
+	return xerr.NewError(
 		fmt.Errorf("Unsupported provider: '%s'", provider),
 		fmt.Sprintf("Provider must be among those: %v", AllowedProviders),
 		provider,

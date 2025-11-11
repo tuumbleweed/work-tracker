@@ -10,11 +10,12 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
-	"work-tracker/src/pkg/logger"
+	tl "github.com/tuumbleweed/tintlog/logger"
+	"github.com/tuumbleweed/tintlog/palette"
 )
 
 func (t *TrackerApp) Start() {
-	logger.Log(logger.Notice, logger.BoldBlueColor, "%s", "Running work tracker app...")
+	tl.Log(tl.Notice, palette.BlueBold, "%s", "Running work tracker app...")
 
 	// set functions
 	t.Button.OnTapped = func() {
@@ -29,9 +30,9 @@ func (t *TrackerApp) Start() {
 			for _, taskRow := range allTableRows {
 				showStopped(taskRow.Button)
 			}
-			logger.Log(logger.Info, logger.CyanColor, "%s. Task name: '%s'", "Stopping task", currentTaskName)
+			tl.Log(tl.Info, palette.Cyan, "%s. Task name: '%s'", "Stopping task", currentTaskName)
 		} else {
-			logger.Log(logger.Info, logger.CyanColor, "%s. Task name: '%s'", "Starting task", currentTaskName)
+			tl.Log(tl.Info, palette.Cyan, "%s. Task name: '%s'", "Starting task", currentTaskName)
 		}
 	}
 	t.Window.SetCloseIntercept(t.onClose)
@@ -44,7 +45,7 @@ func (t *TrackerApp) Start() {
 	t.updateInterface() // initial
 	t.Window.ShowAndRun()
 
-	logger.Log(logger.Notice, logger.BoldGreenColor, "%s", "Closing work tracker app")
+	tl.Log(tl.Notice, palette.GreenBold, "%s", "Closing work tracker app")
 }
 
 func (t *TrackerApp) setContent() {
@@ -114,7 +115,7 @@ Update clock and activity labels.
 This function does not change any TrackerApp values. Only updates the interface.
 */
 func (t *TrackerApp) updateInterface() {
-	logger.Log(logger.Verbose, logger.BlueColor, "%s", "Updating interface")
+	tl.Log(tl.Verbose, palette.Blue, "%s", "Updating interface")
 
 	now := time.Now()
 
@@ -191,7 +192,7 @@ func (t *TrackerApp) updateInterface() {
 			setRowImportance(tableRows[currentTaskName], widget.HighImportance)
 		}
 	})
-	logger.Log(logger.Verbose1, logger.GreenColor, "%s", "Updated interface")
+	tl.Log(tl.Verbose1, palette.Green, "%s", "Updated interface")
 }
 
 /*
@@ -200,14 +201,14 @@ Update TrackerApp underlying paramenters. Runs every tick.
 Do it here instead of doing everything in updateInterface.
 */
 func (t *TrackerApp) refreshState() {
-	logger.Log(logger.Verbose, logger.BlueColor, "%s", "Refreshing state")
+	tl.Log(tl.Verbose, palette.Blue, "%s", "Refreshing state")
 
 	now := time.Now()
 
 	t.Mutex.Lock()
 	// no state updates if not running.
 	if !t.IsRunning {
-		logger.Log(logger.Verbose1, logger.CyanColor, "%s", "No need to refresh state")
+		tl.Log(tl.Verbose1, palette.Cyan, "%s", "No need to refresh state")
 		t.LastTickStart = now
 		t.Mutex.Unlock()
 		return
@@ -239,12 +240,12 @@ func (t *TrackerApp) refreshState() {
 	t.LastTickStart = now
 	t.Mutex.Unlock()
 
-	logger.Log(logger.Verbose1, logger.GreenColor, "%s", "Refreshed state")
+	tl.Log(tl.Verbose1, palette.Green, "%s", "Refreshed state")
 }
 
 // Runs when we press on start/stop button
 func (t *TrackerApp) flipSwitch() {
-	logger.Log(logger.Verbose, logger.BlueColor, "%s", "Flipping switch")
+	tl.Log(tl.Verbose, palette.Blue, "%s", "Flipping switch")
 	t.Mutex.Lock()
 	if !t.IsRunning {
 		// starting
@@ -264,7 +265,7 @@ func (t *TrackerApp) flipSwitch() {
 	}
 	t.CurrentTaskName = "" // set to empty here, can be overriden later
 	t.Mutex.Unlock()
-	logger.Log(logger.Verbose1, logger.GreenColor, "%s", "Flipped switch")
+	tl.Log(tl.Verbose1, palette.Green, "%s", "Flipped switch")
 }
 
 func (t *TrackerApp) flushChunkIfRunning() {

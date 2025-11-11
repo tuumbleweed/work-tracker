@@ -6,8 +6,10 @@ import (
 	"flag"
 	"time"
 
+	tl "github.com/tuumbleweed/tintlog/logger"
+	"github.com/tuumbleweed/tintlog/palette"
+
 	"work-tracker/src/pkg/config"
-	"work-tracker/src/pkg/logger"
 	"work-tracker/src/pkg/util"
 	worktracker "work-tracker/src/pkg/work-tracker"
 )
@@ -15,8 +17,6 @@ import (
 func main() {
 	util.CheckIfEnvVarsPresent([]string{})
 	// common flags
-	logLevelOverride := flag.Int("log-level", -1, "Log level. Default is whatever value is in configuration file. Keep at -1 to not override.")
-	logDirOverride := flag.String("log-dir", "", "File directory at which to save log files. Keep empty to use configuration file instead.")
 	configPath := flag.String("config", "./cfg/config.json", "Path to your configuration file.")
 	// program's custom flags
 	uiInterval := flag.Duration("tick-interval", 1*time.Second, "UI and activity update period (e.g. 2m, 10m, 1h)")
@@ -25,10 +25,10 @@ func main() {
 	tasksFilePath := flag.String("tasks", "./cfg/tasks.json", "File with tasks and their descriptions")
 	// parse and init config
 	flag.Parse()
-	config.InitializeConfig(*configPath, logger.LogLevel(*logLevelOverride), *logDirOverride)
+	config.InitializeConfig(*configPath)
 
-	logger.Log(
-		logger.Notice, logger.BoldBlueColor, "%s worktracker. --ui-interval %s, --save-interval %s, --work-dir %s. Config path: '%s'",
+	tl.Log(
+		tl.Notice, palette.BlueBold, "%s worktracker --ui-interval %s, --save-interval %s, --work-dir %s. Config path: '%s'",
 		"Running", *uiInterval, *chunkInterval, workDir, *configPath,
 	)
 

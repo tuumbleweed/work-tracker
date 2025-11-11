@@ -16,12 +16,13 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
 	"mime"
 
+	tl "github.com/tuumbleweed/tintlog/logger"
+	"github.com/tuumbleweed/tintlog/palette"
+	"github.com/tuumbleweed/xerr"
+
 	"work-tracker/src/pkg/config"
-	er "work-tracker/src/pkg/error"
-	"work-tracker/src/pkg/logger"
 	"work-tracker/src/pkg/util"
 )
 
@@ -48,8 +49,6 @@ func main() {
 	util.CheckIfEnvVarsPresent([]string{})
 
 	// ---------- Common flags ----------
-	logLevelOverride := flag.Int("log-level", -1, "Log level. Default is config value. Keep -1 to not override.")
-	logDirOverride := flag.String("log-dir", "", "Directory for log files. Keep empty to use config value.")
 	configPath := flag.String("config", "./cfg/config.json", "Path to configuration file.")
 
 	// ---------- Program flags ----------
@@ -75,24 +74,24 @@ func main() {
 
 	// Parse and init config
 	flag.Parse()
-	config.InitializeConfig(*configPath, logger.LogLevel(*logLevelOverride), *logDirOverride)
+	config.InitializeConfig(*configPath)
 
 	// ---- validations ----
 	if *from == "" {
-		er.QuitIfError(fmt.Errorf("missing -from"), "Missing -from address")
+		xerr.QuitIfError(fmt.Errorf("missing -from"), "Missing -from address")
 	}
 	if len(to) == 0 {
-		er.QuitIfError(fmt.Errorf("missing -to"), "At least one -to address is required")
+		xerr.QuitIfError(fmt.Errorf("missing -to"), "At least one -to address is required")
 	}
 	if *smtpHost == "" || *smtpPort <= 0 {
-		er.QuitIfError(fmt.Errorf("smtp invalid"), "Invalid SMTP host/port")
+		xerr.QuitIfError(fmt.Errorf("smtp invalid"), "Invalid SMTP host/port")
 	}
 	if !*noAuth && (*smtpUser == "" || *smtpPass == "") {
-		logger.Log(logger.Warning, logger.YellowColor, "Auth enabled but -smtp-user or -smtp-pass is empty. Use -no-auth for IP-allowed relays.")
+		tl.Log(tl.Warning, palette.Yellow, "Auth enabled but -smtp-user or -smtp-pass is empty. Use -no-auth for IP-allowed relays.")
 	}
 
 	if *useSMTPS && *startTLS {
-		logger.Log(logger.Info, logger.BlueColor, "Note: -smtps=true overrides -starttls (implicit TLS will be used).")
+		tl.Log(tl.Info, palette.Blue, "Note: -smtps=true overrides -starttls (implicit TLS will be used).")
 	}
 
 	// EHLO name
@@ -108,19 +107,19 @@ func main() {
 	textBody, _ := readFileIfExists(*textPath)
 	htmlBody, _ := readFileIfExists(*htmlPath)
 	if strings.TrimSpace(textBody) == "" && strings.TrimSpace(htmlBody) == "" {
-		er.QuitIfError(fmt.Errorf("no bodies"), "Neither -text nor -html file has content")
+		xerr.QuitIfError(fmt.Errorf("no bodies"), "Neither -text nor -html file has content")
 	}
 
 	// ---- build MIME message ----
 	msg, err, emsg := buildMessage(*from, to, *subject, textBody, htmlBody)
-	er.QuitIfError(err, emsg)
+	xerr.QuitIfError(err, emsg)
 
 	// ---- send via SMTP relay ----
 	err, emsg = sendSMTP(*smtpHost, *smtpPort, *ehloName, *useSMTPS, *startTLS, *skipVerify, !*noAuth, *smtpUser, *smtpPass, *from, to, msg)
-	er.QuitIfError(err, emsg)
+	xerr.QuitIfError(err, emsg)
 
-	logger.Log(
-		logger.Notice, logger.BoldGreenColor,
+	tl.Log(
+		tl.Notice, palette.GreenBold,
 		"Email sent successfully via %s:%d to %s",
 		*smtpHost, *smtpPort, strings.Join(to, ", "),
 	)
@@ -291,7 +290,6 @@ func sendSMTP(
 	}
 	return nil, ""
 }
-
 
 func randomBoundary(prefix string) string {
 	var b [12]byte

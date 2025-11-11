@@ -1,6 +1,6 @@
 module work-tracker
 
-go 1.24.4
+go 1.25.3
 
 require (
 	fyne.io/fyne/v2 v2.7.0
@@ -11,9 +11,10 @@ require (
 	github.com/mailgun/mailgun-go/v4 v4.23.0
 	github.com/sendgrid/rest v2.6.9+incompatible
 	github.com/sendgrid/sendgrid-go v3.16.1+incompatible
+	github.com/tuumbleweed/tintlog v0.0.9
+	github.com/tuumbleweed/xerr v0.0.2
 	golang.org/x/exp v0.0.0-20251023183803-a4bb9ffd2546
 	golang.org/x/net v0.35.0
-	gorm.io/gorm v1.31.0
 )
 
 require (
@@ -68,4 +69,5 @@ require (
 	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/text v0.22.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	gorm.io/gorm v1.31.1 // indirect
 )

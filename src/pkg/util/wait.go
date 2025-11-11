@@ -6,12 +6,13 @@ import (
 	"math/rand"
 	"time"
 
-	"work-tracker/src/pkg/logger"
+	tl "github.com/tuumbleweed/tintlog/logger"
+	"github.com/tuumbleweed/tintlog/palette"
 )
 
 // Wait for timeout amount of time
 func WaitFor(timeout time.Duration) {
-	logger.Log(logger.Debug, logger.DimCyanColor, "%s for %v", "Waiting", timeout.Round(time.Millisecond))
+	tl.Log(tl.Debug, palette.CyanDim, "%s for %v", "Waiting", timeout.Round(time.Millisecond))
 	time.Sleep(timeout)
 }
 
@@ -23,7 +24,7 @@ func WaitBetween(min, max time.Duration) {
 
 // Wait for set amount of seconds
 func WaitForSeconds(timeoutSeconds float64) {
-	logger.Log(logger.Debug, logger.DimCyanColor, "%s for %s seconds", "Waiting", fmt.Sprintf("%.3f", timeoutSeconds))
+	tl.Log(tl.Debug, palette.CyanDim, "%s for %s seconds", "Waiting", fmt.Sprintf("%.3f", timeoutSeconds))
 	timeoutNanoseconds := int(timeoutSeconds * math.Pow(10, 9))
 	time.Sleep(time.Duration(timeoutNanoseconds))
 }

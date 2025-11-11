@@ -1,4 +1,4 @@
-package util
+package config
 
 import (
 	"fmt"
@@ -7,9 +7,9 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/tuumbleweed/xerr"
 	tl "github.com/tuumbleweed/tintlog/logger"
 	"github.com/tuumbleweed/tintlog/palette"
-	"github.com/tuumbleweed/xerr"
 )
 
 // since we call this only when initializing config at the start of the program

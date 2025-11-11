@@ -5,9 +5,11 @@ import (
 	"flag"
 	"os"
 
+	tl "github.com/tuumbleweed/tintlog/logger"
+	"github.com/tuumbleweed/tintlog/palette"
+	"github.com/tuumbleweed/xerr"
+
 	"work-tracker/src/pkg/config"
-	er "work-tracker/src/pkg/error"
-	"work-tracker/src/pkg/logger"
 	"work-tracker/src/pkg/util"
 )
 
@@ -15,16 +17,14 @@ func example(subprogram string, flags []string) {
 	util.CheckIfEnvVarsPresent([]string{})
 	// common flags
 	subprogramCmd := flag.NewFlagSet(subprogram, flag.ExitOnError)
-	logLevelOverride := subprogramCmd.Int("log-level", -1, "Log level. Default is whatever value is in configuration file. Keep at -1 to not override.")
-	logDirOverride := subprogramCmd.String("log-dir", "", "File directory at which to save log files. Keep empty to use configuration file instead.")
 	configPath := subprogramCmd.String("config", "./cfg/config.json", "Path to your configuration file.")
 	// program's custom flags
 	// parse and init config
-	er.QuitIfError(subprogramCmd.Parse(flags), "Unable to subprogramCmd.Parse")
-	config.InitializeConfig(*configPath, logger.LogLevel(*logLevelOverride), *logDirOverride)
+	xerr.QuitIfError(subprogramCmd.Parse(flags), "Unable to subprogramCmd.Parse")
+	config.InitializeConfig(*configPath)
 
-	logger.Log(
-		logger.Notice, logger.BoldBlueColor, "%s example-subprogram entrypoint. Subprogram: '%s'. Config path: '%s'",
+	tl.Log(
+		tl.Notice, palette.BlueBold, "%s example-subprogram entrypoint. Subprogram: '%s'. Config path: '%s'",
 		"Running", subprogram, *configPath,
 	)
 }
@@ -32,7 +32,7 @@ func example(subprogram string, flags []string) {
 func main() {
 	// Check if there are enough arguments
 	if len(os.Args) < 2 {
-		logger.Log(logger.Error, logger.RedColor, "Usage: %s", "go run src/cmd/example-subprogram/main.go subprogram_name(for exampe first-example)")
+		tl.Log(tl.Error, palette.Red, "Usage: %s", "go run src/cmd/example-subprogram/main.go subprogram_name(for exampe first-example)")
 		os.Exit(0)
 	}
 	subprogram := os.Args[1]
@@ -43,7 +43,7 @@ func main() {
 	case "first-example":
 		example(subprogram, flags)
 	default:
-		logger.Log(logger.Error, logger.RedColor, "Unknown subprogram: %s", subprogram)
+		tl.Log(tl.Error, palette.Red, "Unknown subprogram: %s", subprogram)
 		os.Exit(0)
 	}
 }

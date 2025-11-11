@@ -1,12 +1,12 @@
-package util
+package config
 
 import (
 	"encoding/json"
 	"os"
 
+	"github.com/tuumbleweed/xerr"
 	tl "github.com/tuumbleweed/tintlog/logger"
 	"github.com/tuumbleweed/tintlog/palette"
-	"github.com/tuumbleweed/xerr"
 )
 
 /*
@@ -22,15 +22,8 @@ need this since config has no effect yet during LoadConfig.
 
 We keep it in util package in order to reuse it in case of projects with multiple config packages
 */
-func LoadConfig(filePath string, config any, logLevelOverride tl.LogLevel) (e *xerr.Error) {
+func LoadConfig(filePath string, config any) (e *xerr.Error) {
 	tl.Log(tl.Notice, palette.Blue, "%s config '%s'", "Loading", filePath)
-	// override log level here first in order for common.LoadConfig to be able to print Info1 and above
-	// within LoadConfig function
-	if logLevelOverride != tl.DontOverride {
-		tl.Log(tl.Cfg.LogLevel, palette.Cyan, "%s was switched from '%s' to '%s'", "Log level", tl.Cfg.LogLevel, logLevelOverride)
-		tl.Cfg.LogLevel = logLevelOverride
-	}
-
 	byteValue, err := os.ReadFile(filePath)
 	if err != nil {
 		return xerr.NewErrorECOL(err, "Unable to read a file", "file path", filePath)
@@ -43,4 +36,12 @@ func LoadConfig(filePath string, config any, logLevelOverride tl.LogLevel) (e *x
 
 	tl.Log(tl.Notice1, palette.Green, "%s config '%s'", "Loaded", filePath)
 	return nil
+}
+
+func FileExists(filename string) bool {
+	_, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return err == nil
 }

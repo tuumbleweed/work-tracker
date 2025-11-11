@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"os"
 
-	er "work-tracker/src/pkg/error"
-	"work-tracker/src/pkg/logger"
+	tl "github.com/tuumbleweed/tintlog/logger"
+	"github.com/tuumbleweed/tintlog/palette"
+	"github.com/tuumbleweed/xerr"
+
 	"work-tracker/src/pkg/util"
 )
 
@@ -21,7 +23,7 @@ Thus we must pass it as a parameter to this function.
 func SendMessage(
 	provider Provider, sendEmails *bool, senderAddress string, recipientAddresses []string,
 	subject, plainTextContent, htmlContent string, attachments []Attachment,
-) (e *er.Error) {
+) (e *xerr.Error) {
 	if sendEmails == nil || !*sendEmails { // no nil dereference, sendEmails == nil is checked first
 		var sendEmailsLog string
 		if sendEmails == nil {
@@ -31,7 +33,7 @@ func SendMessage(
 		} else {
 			sendEmailsLog = "true"
 		}
-		logger.Log(logger.Notice, logger.BoldPurpleColor, "%s because %s is set to %s", "Not sending an email", "send_emails", sendEmailsLog)
+		tl.Log(tl.Notice, palette.PurpleBold, "%s because %s is set to %s", "Not sending an email", "send_emails", sendEmailsLog)
 		return nil
 	}
 
@@ -43,7 +45,7 @@ func SendMessage(
 	case ProviderAmazonSES:
 		e = SendMessageAmazonSESWrapper(senderAddress, recipientAddresses, subject, plainTextContent, htmlContent, attachments)
 	default:
-		return er.NewError(
+		return xerr.NewError(
 			fmt.Errorf("Unsupported provider: '%s'", provider),
 			fmt.Sprintf("Provider must be among those: %v", AllowedProviders),
 			provider,
@@ -60,25 +62,25 @@ func SendMessage(
 			"plainHash":  sha256Short(plainTextContent),
 			"htmlHash":   sha256Short(htmlContent),
 		}
-		e.Context = er.StringifyContext(contextMap)
+		e.Context = xerr.StringifyContext(contextMap)
 		return e
 	}
 
-	util.WaitForSeconds(5)
+	util.WaitForSeconds(3)
 	return e
 }
 
 func SendMessageAmazonSESWrapper(
 	senderAddress string, recipientAddresses []string, subject, plainTextContent, htmlContent string,
 	attachments []Attachment,
-) (e *er.Error) {
+) (e *xerr.Error) {
 
 	err, errMsg := SendMessageAmazonSESRawV2(
 		os.Getenv("AWS_REGION"), senderAddress, recipientAddresses, nil, nil,
 		subject, plainTextContent, htmlContent, "", attachments,
 	)
 	if err != nil {
-		return er.NewError(err, errMsg, nil)
+		return xerr.NewError(err, errMsg, nil)
 	}
 
 	return nil
@@ -87,14 +89,14 @@ func SendMessageAmazonSESWrapper(
 func SendMessageSendgridWrapper(
 	senderAddress string, recipientAddresses []string, subject, plainTextContent, htmlContent string,
 	attachments []Attachment,
-) (e *er.Error) {
+) (e *xerr.Error) {
 
 	err, errMsg := SendMessageSendgrid(
 		os.Getenv("SENDGRID_API_KEY"), senderAddress, recipientAddresses, nil, nil,
 		subject, plainTextContent, htmlContent, "", attachments,
 	)
 	if err != nil {
-		return er.NewError(err, errMsg, nil)
+		return xerr.NewError(err, errMsg, nil)
 	}
 
 	return nil
@@ -107,14 +109,14 @@ but also accepts attachments. It reads MAILGUN_DOMAIN and MAILGUN_API_KEY from e
 func SendMessageMailgunWrapper(
 	senderAddress string, recipientAddresses []string, subject, plainTextContent, htmlContent string,
 	attachments []Attachment,
-) (e *er.Error) {
+) (e *xerr.Error) {
 
 	err, errMsg := SendMessageMailgunWithUnsubUrlAndAttachments(
 		os.Getenv("MAILGUN_DOMAIN"), os.Getenv("MAILGUN_API_KEY"), senderAddress,
 		recipientAddresses, nil, nil, subject, plainTextContent, htmlContent, "", attachments,
 	)
 	if err != nil {
-		return er.NewError(err, errMsg, nil)
+		return xerr.NewError(err, errMsg, nil)
 	}
 
 	return nil

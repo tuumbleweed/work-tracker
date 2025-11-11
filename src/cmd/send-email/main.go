@@ -8,10 +8,12 @@ import (
 	"strings"
 	"time"
 
+	tl "github.com/tuumbleweed/tintlog/logger"
+	"github.com/tuumbleweed/tintlog/palette"
+	"github.com/tuumbleweed/xerr"
+
 	"work-tracker/src/pkg/config"
 	"work-tracker/src/pkg/email"
-	er "work-tracker/src/pkg/error"
-	"work-tracker/src/pkg/logger"
 	"work-tracker/src/pkg/report"
 	"work-tracker/src/pkg/util"
 )
@@ -29,8 +31,6 @@ func testProvider(subprogram string, flags []string) {
 
 	// common flags
 	subprogramCmd := flag.NewFlagSet(subprogram, flag.ExitOnError)
-	logLevelOverride := subprogramCmd.Int("log-level", -1, "Log level. Default is whatever value is in configuration file. Keep at -1 to not override.")
-	logDirOverride := subprogramCmd.String("log-dir", "", "File directory at which to save log files. Keep empty to use configuration file instead.")
 	configPath := subprogramCmd.String("config", "./cfg/config.json", "Log level. Default is LOG_LEVEL env var value")
 
 	// custom flags
@@ -42,8 +42,8 @@ func testProvider(subprogram string, flags []string) {
 	emailTxtFilePath := subprogramCmd.String("plain-file", "./tmp/email.txt", "Plain text of an email")
 
 	// parse and init config
-	er.QuitIfError(subprogramCmd.Parse(flags), "Unable to subprogramCmd.Parse")
-	config.InitializeConfig(*configPath, logger.LogLevel(*logLevelOverride), *logDirOverride)
+	xerr.QuitIfError(subprogramCmd.Parse(flags), "Unable to subprogramCmd.Parse")
+	config.InitializeConfig(*configPath)
 
 	util.RequiredFlag(senderAddress, "--sender")
 	util.RequiredFlag(recipientAddress, "--recipient")
@@ -53,14 +53,14 @@ func testProvider(subprogram string, flags []string) {
 
 	// read html file
 	htmlFileContentsBytes, err := os.ReadFile(*emailHtmlFilePath)
-	er.QuitIfError(err, fmt.Sprintf("Unable to read file '%s'", *emailHtmlFilePath))
+	xerr.QuitIfError(err, fmt.Sprintf("Unable to read file '%s'", *emailHtmlFilePath))
 	htmlFileContents := string(htmlFileContentsBytes)
-	logger.Log(logger.Verbose, logger.DimBlueColor, "Full Email:\n```\n%s\n```", htmlFileContents)
+	tl.Log(tl.Verbose, palette.BlueDim, "Full Email:\n```\n%s\n```", htmlFileContents)
 	// read text file
 	textFileContentsBytes, err := os.ReadFile(*emailTxtFilePath)
-	er.QuitIfError(err, fmt.Sprintf("Unable to read file '%s'", *emailTxtFilePath))
+	xerr.QuitIfError(err, fmt.Sprintf("Unable to read file '%s'", *emailTxtFilePath))
 	textFileContents := string(textFileContentsBytes)
-	logger.Log(logger.Verbose, logger.DimBlueColor, "Full Email:\n```\n%s\n```", textFileContents)
+	tl.Log(tl.Verbose, palette.BlueDim, "Full Email:\n```\n%s\n```", textFileContents)
 
 	// send email here
 	sendEmails := true
@@ -68,9 +68,8 @@ func testProvider(subprogram string, flags []string) {
 	e.QuitIf("error")
 }
 
-
 /*
-A shorter version of testProvider.
+A shorter version of testProvidxerr.
 Exists to send a report from ./out/report.html.
 
 Currently no text version of the report.
@@ -85,8 +84,6 @@ func sendReport(subprogram string, flags []string) {
 
 	// common flags
 	subprogramCmd := flag.NewFlagSet(subprogram, flag.ExitOnError)
-	logLevelOverride := subprogramCmd.Int("log-level", -1, "Log level. Default is whatever value is in configuration file. Keep at -1 to not override.")
-	logDirOverride := subprogramCmd.String("log-dir", "", "File directory at which to save log files. Keep empty to use configuration file instead.")
 	configPath := subprogramCmd.String("config", "./cfg/config.json", "Log level. Default is LOG_LEVEL env var value")
 
 	// custom flags
@@ -96,8 +93,8 @@ func sendReport(subprogram string, flags []string) {
 	emailHtmlFilePath := subprogramCmd.String("html-file", "./out/report.html", "Html of an email")
 
 	// parse and init config
-	er.QuitIfError(subprogramCmd.Parse(flags), "Unable to subprogramCmd.Parse")
-	config.InitializeConfig(*configPath, logger.LogLevel(*logLevelOverride), *logDirOverride)
+	xerr.QuitIfError(subprogramCmd.Parse(flags), "Unable to subprogramCmd.Parse")
+	config.InitializeConfig(*configPath)
 
 	util.RequiredFlag(senderAddress, "--sender")
 	util.RequiredFlag(recipientAddress, "--recipient")
@@ -107,9 +104,9 @@ func sendReport(subprogram string, flags []string) {
 
 	// read html file
 	htmlFileContentsBytes, err := os.ReadFile(*emailHtmlFilePath)
-	er.QuitIfError(err, fmt.Sprintf("Unable to read file '%s'", *emailHtmlFilePath))
+	xerr.QuitIfError(err, fmt.Sprintf("Unable to read file '%s'", *emailHtmlFilePath))
 	htmlFileContents := string(htmlFileContentsBytes)
-	logger.Log(logger.Verbose, logger.DimBlueColor, "Full Email:\n```\n%s\n```", htmlFileContents)
+	tl.Log(tl.Verbose, palette.BlueDim, "Full Email:\n```\n%s\n```", htmlFileContents)
 	// read text file
 
 	reportTitle, e := report.ReadHTMLTitleFromBytes(htmlFileContentsBytes)
@@ -128,7 +125,7 @@ func sendReport(subprogram string, flags []string) {
 func main() {
 	// Check if there are enough arguments
 	if len(os.Args) < 2 {
-		logger.Log(logger.Error, logger.RedColor, "Usage: %s", "go run src/cmd/unsubscriber/main.go subprogram_name(for exampe unsubscriber)")
+		tl.Log(tl.Error, palette.Red, "Usage: %s", "go run src/cmd/unsubscriber/main.go subprogram_name(for exampe unsubscriber)")
 		os.Exit(1)
 	}
 	subprogram := os.Args[1]
@@ -141,7 +138,7 @@ func main() {
 	case "report":
 		sendReport(subprogram, flags)
 	default:
-		logger.Log(logger.Error, logger.RedColor, "Unknown subprogram: %s", subprogram)
+		tl.Log(tl.Error, palette.Red, "Unknown subprogram: %s", subprogram)
 		os.Exit(1)
 	}
 }

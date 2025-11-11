@@ -11,12 +11,13 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ses"
 
-	"work-tracker/src/pkg/logger"
+	tl "github.com/tuumbleweed/tintlog/logger"
+	"github.com/tuumbleweed/tintlog/palette"
 )
 
 // make sure AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY env vars are present
 func SendMessageAmazonSES(awsRegion, senderAddress, recipientAddress, subject, plainTextContent, htmlContent string) (err error, errMsg string) {
-	logger.Log(logger.Info, logger.BlueColor, "Sending an email to '%s' using %s provider", recipientAddress, "Amazon SES")
+	tl.Log(tl.Info, palette.Blue, "Sending an email to '%s' using %s provider", recipientAddress, "Amazon SES")
 	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String(awsRegion),
 	})
@@ -62,7 +63,7 @@ func SendMessageAmazonSES(awsRegion, senderAddress, recipientAddress, subject, p
 		return err, fmt.Sprintf("Failed to send an email to '%s' using %s", recipientAddress, "Amazon SES")
 	}
 
-	logger.Log(logger.Info1, logger.GreenColor, "Sent   an email to '%s' using %s provider", recipientAddress, "Amazon SES")
+	tl.Log(tl.Info1, palette.Green, "Sent   an email to '%s' using %s provider", recipientAddress, "Amazon SES")
 
 	return nil, ""
 }
@@ -70,7 +71,7 @@ func SendMessageAmazonSES(awsRegion, senderAddress, recipientAddress, subject, p
 
 // raw version, allows to add custom headers such as List-Unsubscribe
 func SendMessageAmazonSESRaw(awsRegion, senderAddress, recipientAddress, subject, plainTextContent, htmlContent, unsubUrl string) (err error, errMsg string) {
-	logger.Log(logger.Info, logger.BlueColor, "Sending a raw email to '%s' using %s provider", recipientAddress, "Amazon SES")
+	tl.Log(tl.Info, palette.Blue, "Sending a raw email to '%s' using %s provider", recipientAddress, "Amazon SES")
 
 	// Create AWS session
 	sess, err := session.NewSession(&aws.Config{
@@ -97,10 +98,10 @@ func SendMessageAmazonSESRaw(awsRegion, senderAddress, recipientAddress, subject
 	// if unsubscribe url is provided
 	if unsubUrl != "" {
 		emailBody.WriteString(fmt.Sprintf("List-Unsubscribe: <%s>\r\n", unsubUrl))
-		logger.Log(logger.Detailed, logger.BlueColor, "Set %s for an email to '%s'", "List-Unsubscribe header", unsubUrl)
+		tl.Log(tl.Detailed, palette.Blue, "Set %s for an email to '%s'", "List-Unsubscribe header", unsubUrl)
 		// List-Unsubscribe-Post: List-Unsubscribe=One-Click
 		emailBody.WriteString("List-Unsubscribe-Post: List-Unsubscribe=One-Click\r\n")
-		logger.Log(logger.Detailed, logger.BlueColor, "Set %s for an email to '%s'", "List-Unsubscribe-Post header", "List-Unsubscribe=One-Click")
+		tl.Log(tl.Detailed, palette.Blue, "Set %s for an email to '%s'", "List-Unsubscribe-Post header", "List-Unsubscribe=One-Click")
 	}
 	emailBody.WriteString("\r\n")
 
@@ -141,7 +142,7 @@ func SendMessageAmazonSESRaw(awsRegion, senderAddress, recipientAddress, subject
 		return err, fmt.Sprintf("Failed to send a raw email to '%s' using %s", recipientAddress, "Amazon SES")
 	}
 
-	logger.Log(logger.Info1, logger.GreenColor, "Email sent successfully to '%s' using %s", recipientAddress, "Amazon SES")
+	tl.Log(tl.Info1, palette.Green, "Email sent successfully to '%s' using %s", recipientAddress, "Amazon SES")
 
 	return nil, ""
 }

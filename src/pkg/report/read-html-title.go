@@ -7,8 +7,9 @@ import (
 
 	"golang.org/x/net/html"
 
-	er "work-tracker/src/pkg/error"
-	"work-tracker/src/pkg/logger"
+	tl "github.com/tuumbleweed/tintlog/logger"
+	"github.com/tuumbleweed/tintlog/palette"
+	"github.com/tuumbleweed/xerr"
 )
 
 /*
@@ -17,10 +18,10 @@ already-loaded HTML document contained in data.
 
 Returns:
   - title string
-  - e *er.Error (nil on success)
+  - e *xerr.Error (nil on success)
 */
-func ReadHTMLTitleFromBytes(data []byte) (title string, e *er.Error) {
-	logger.Log(logger.Notice, logger.BlueColor, "%s (%s %d)", "Reading HTML title from bytes", "len", len(data))
+func ReadHTMLTitleFromBytes(data []byte) (title string, e *xerr.Error) {
+	tl.Log(tl.Notice, palette.Blue, "%s (%s %d)", "Reading HTML title from bytes", "len", len(data))
 
 	reader := bytes.NewReader(data)
 
@@ -29,7 +30,7 @@ func ReadHTMLTitleFromBytes(data []byte) (title string, e *er.Error) {
 		return
 	}
 
-	logger.Log(logger.Info1, logger.GreenColor, "%s '%s'", "Found HTML title", title)
+	tl.Log(tl.Info1, palette.Green, "%s '%s'", "Found HTML title", title)
 	return
 }
 
@@ -37,8 +38,8 @@ func ReadHTMLTitleFromBytes(data []byte) (title string, e *er.Error) {
 readHTMLTitle scans an HTML stream and returns the first non-empty <title> text.
 It does not assume <head> placement and tolerates whitespace or multi-chunk text.
 */
-func readHTMLTitle(r io.Reader) (title string, e *er.Error) {
-	logger.Log(logger.Debug3, logger.BlueColor, "%s", "Scanning HTML stream for <title>")
+func readHTMLTitle(r io.Reader) (title string, e *xerr.Error) {
+	tl.Log(tl.Debug3, palette.Blue, "%s", "Scanning HTML stream for <title>")
 
 	tokenizer := html.NewTokenizer(r)
 
@@ -48,12 +49,12 @@ func readHTMLTitle(r io.Reader) (title string, e *er.Error) {
 		if tokenType == html.ErrorToken {
 			parseErr := tokenizer.Err()
 			if parseErr == io.EOF {
-				e = er.NewError(nil, "no <title> element found", "")
-				e.Print(er.ErrorTypeWarning, logger.Warning1, 0)
+				e = xerr.NewError(nil, "no <title> element found", "")
+				e.Print(xerr.ErrorTypeWarning, tl.Warning1, 0)
 				return
 			}
-			e = er.NewError(parseErr, "tokenizer error while reading HTML", "")
-			e.Print(er.ErrorTypeError, logger.Error1, 0)
+			e = xerr.NewError(parseErr, "tokenizer error while reading HTML", "")
+			e.Print(xerr.ErrorTypeError, tl.Error1, 0)
 			return
 		}
 
@@ -76,10 +77,10 @@ func readHTMLTitle(r io.Reader) (title string, e *er.Error) {
 							candidate := strings.TrimSpace(builder.String())
 							if candidate != "" {
 								title = candidate
-								logger.Log(logger.Info2, logger.GreenColor, "%s '%s'", "Captured title", title)
+								tl.Log(tl.Info2, palette.Green, "%s '%s'", "Captured title", title)
 								return
 							}
-							logger.Log(logger.Notice, logger.CyanColor, "%s", "Encountered empty <title>, continuing scan")
+							tl.Log(tl.Notice, palette.Cyan, "%s", "Encountered empty <title>, continuing scan")
 							break
 						}
 					}
@@ -89,15 +90,15 @@ func readHTMLTitle(r io.Reader) (title string, e *er.Error) {
 						if err == io.EOF {
 							title = strings.TrimSpace(builder.String())
 							if title != "" {
-								logger.Log(logger.Info2, logger.GreenColor, "%s '%s'", "Captured title at EOF", title)
+								tl.Log(tl.Info2, palette.Green, "%s '%s'", "Captured title at EOF", title)
 								return
 							}
-							e = er.NewError(nil, "no <title> element found before EOF", "")
-							e.Print(er.ErrorTypeWarning, logger.Warning1, 0)
+							e = xerr.NewError(nil, "no <title> element found before EOF", "")
+							e.Print(xerr.ErrorTypeWarning, tl.Warning1, 0)
 							return
 						}
-						e = er.NewError(err, "tokenizer error while reading <title> contents", "")
-						e.Print(er.ErrorTypeError, logger.Error1, 0)
+						e = xerr.NewError(err, "tokenizer error while reading <title> contents", "")
+						e.Print(xerr.ErrorTypeError, tl.Error1, 0)
 						return
 					}
 				}

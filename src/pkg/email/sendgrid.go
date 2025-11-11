@@ -12,7 +12,8 @@ import (
 	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 
-	"work-tracker/src/pkg/logger"
+	tl "github.com/tuumbleweed/tintlog/logger"
+	"github.com/tuumbleweed/tintlog/palette"
 )
 
 // Supports To/Cc/Bcc, optional List-Unsubscribe, and attachments.
@@ -24,7 +25,7 @@ func SendMessageSendgrid(
 	if logWho == "" {
 		logWho = "(no To recipients)"
 	}
-	logger.Log(logger.Info, logger.BlueColor, "Sending an email to '%s' using %s provider", logWho, "sendgrid")
+	tl.Log(tl.Info, palette.Blue, "Sending an email to '%s' using %s provider", logWho, "sendgrid")
 
 	// Build V3 Mail (supports multiple recipients)
 	msg := mail.NewV3Mail()
@@ -54,9 +55,9 @@ func SendMessageSendgrid(
 	// Optional List-Unsubscribe headers (per RFC 8058)
 	if unsubUrl != "" {
 		p.SetHeader("List-Unsubscribe", fmt.Sprintf("<%s>", unsubUrl))
-		logger.Log(logger.Detailed, logger.BlueColor, "Set %s for an email to '%s'", "List-Unsubscribe header", unsubUrl)
+		tl.Log(tl.Detailed, palette.Blue, "Set %s for an email to '%s'", "List-Unsubscribe header", unsubUrl)
 		p.SetHeader("List-Unsubscribe-Post", "List-Unsubscribe=One-Click")
-		logger.Log(logger.Detailed, logger.BlueColor, "Set %s for an email to '%s'", "List-Unsubscribe-Post header", "List-Unsubscribe=One-Click")
+		tl.Log(tl.Detailed, palette.Blue, "Set %s for an email to '%s'", "List-Unsubscribe-Post header", "List-Unsubscribe=One-Click")
 	}
 
 	msg.AddPersonalizations(p)
@@ -80,8 +81,8 @@ func SendMessageSendgrid(
 
 		msg.AddAttachment(sgAtt)
 
-		logger.Log(
-			logger.Detailed, logger.DimCyanColor,
+		tl.Log(
+			tl.Detailed, palette.CyanDim,
 			"Attached file '%s' (%d bytes, type '%s')", att.Filename, len(att.Data), mime,
 		)
 	}
@@ -91,12 +92,12 @@ func SendMessageSendgrid(
 		return err, fmt.Sprintf("Failed to send an email to '%s' using %s", logWho, "sendgrid")
 	}
 
-	logger.Log(logger.Verbose, logger.DimCyanColor, "SendGrid response status code: %d", resp.StatusCode)
-	logger.Log(logger.Verbose, logger.DimCyanColor, "SendGrid response body: %s", resp.Body)
-	logger.Log(logger.Verbose, logger.DimCyanColor, "SendGrid response headers: %v", resp.Headers)
+	tl.Log(tl.Verbose, palette.CyanDim, "SendGrid response status code: %d", resp.StatusCode)
+	tl.Log(tl.Verbose, palette.CyanDim, "SendGrid response body: %s", resp.Body)
+	tl.Log(tl.Verbose, palette.CyanDim, "SendGrid response headers: %v", resp.Headers)
 
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-		logger.Log(logger.Info1, logger.GreenColor, "Email sent successfully to '%s' using %s", logWho, "sendgrid")
+		tl.Log(tl.Info1, palette.Green, "Email sent successfully to '%s' using %s", logWho, "sendgrid")
 		return nil, ""
 	}
 
