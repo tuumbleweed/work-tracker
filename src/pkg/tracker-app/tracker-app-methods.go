@@ -72,7 +72,7 @@ func (t *TrackerApp) setContent() {
 
 func (t *TrackerApp) onButtonTapped() {
 	t.refreshActivityState()
-	t.refreshState()
+	t.refreshUIState()
 	t.flushChunkIfRunning()
 	t.flipSwitch()
 	t.updateInterface()
@@ -80,6 +80,8 @@ func (t *TrackerApp) onButtonTapped() {
 
 func (t *TrackerApp) onClose() {
 	close(t.done)
+	t.refreshActivityState()
+	t.refreshUIState()
 	t.UITicker.Stop()
 	t.ActivityTicker.Stop()
 	t.FlushTicker.Stop()
@@ -93,7 +95,7 @@ func (t *TrackerApp) uiTickLoop() {
 	for {
 		select {
 		case <-t.UITicker.C:
-			t.refreshState()
+			t.refreshUIState()
 			t.updateInterface()
 		case <-t.done:
 			return
@@ -214,7 +216,7 @@ Update TrackerApp underlying paramenters. Runs every tick.
 
 Do it here instead of doing everything in updateInterface.
 */
-func (t *TrackerApp) refreshState() {
+func (t *TrackerApp) refreshUIState() {
 	tl.Log(tl.Verbose, palette.Blue, "%s", "Refreshing UI state")
 
 	now := time.Now()

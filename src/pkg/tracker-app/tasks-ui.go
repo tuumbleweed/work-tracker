@@ -104,7 +104,7 @@ func (t *TrackerApp) makeTasksUI(tasks []Task) *fyne.Container {
 
 			// refresh state and then flush
 			t.refreshActivityState()
-			t.refreshState()
+			t.refreshUIState()
 			t.flushChunkIfRunning()
 			// now set t.CurrentTaskName to newTaskName
 			t.Mutex.Lock()
@@ -115,7 +115,7 @@ func (t *TrackerApp) makeTasksUI(tasks []Task) *fyne.Container {
 				maps.Copy(t.TimeByTaskBeforeStartingThisRun, t.TimeByTask)
 			}
 			t.Mutex.Unlock()
-			t.refreshState()
+			t.refreshUIState()
 			t.updateInterface() // update interface to show current task name right away
 		}
 
