@@ -103,6 +103,7 @@ func (t *TrackerApp) makeTasksUI(tasks []Task) *fyne.Container {
 			}
 
 			// refresh state and then flush
+			t.refreshActivityState()
 			t.refreshState()
 			t.flushChunkIfRunning()
 			// now set t.CurrentTaskName to newTaskName

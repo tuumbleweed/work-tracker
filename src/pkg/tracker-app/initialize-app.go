@@ -9,11 +9,11 @@ import (
 	"github.com/tuumbleweed/xerr"
 )
 
-func InitializeTrackerApp(appId, windowTitle, workDir, tasksFilePath string, tickInterval, flushInterval time.Duration) (trackerApp *TrackerApp, e *xerr.Error) {
+func InitializeTrackerApp(appId, windowTitle, workDir, tasksFilePath string, uiTickInterval, activityTickInterval, flushInterval time.Duration) (trackerApp *TrackerApp, e *xerr.Error) {
 	tl.Log(
 		tl.Important, palette.BlueBold,
-		"%s tracker app. App id: '%s', window title: '%s', work dir: '%s', tick interval: %s, flush interval: '%s'",
-		"Initializing", appId, windowTitle, workDir, tickInterval, flushInterval,
+		"%s tracker app. App id: '%s', window title: '%s', work dir: '%s', UI tick interval: %s, activity tick interval: %s, flush tick interval: '%s'",
+		"Initializing", appId, windowTitle, workDir, uiTickInterval, activityTickInterval, flushInterval,
 	)
 
 	trackerApp, e = initializeInterface(appId, windowTitle, tasksFilePath)
@@ -37,17 +37,19 @@ func InitializeTrackerApp(appId, windowTitle, workDir, tasksFilePath string, tic
 	maps.Copy(trackerApp.TimeByTaskBeforeStartingThisRun, trackerApp.TimeByTask)
 
 	// initialize tickers
-	trackerApp.TickInterval = tickInterval
-	trackerApp.FlushInterval = flushInterval
-	trackerApp.Ticker = time.NewTicker(trackerApp.TickInterval)
-	trackerApp.FlushTicker = time.NewTicker(trackerApp.FlushInterval)
+	trackerApp.UITickInterval = uiTickInterval
+	trackerApp.ActivityTickInterval = activityTickInterval
+	trackerApp.FlushTickInterval = flushInterval
+	trackerApp.ActivityTicker = time.NewTicker(trackerApp.ActivityTickInterval)
+	trackerApp.UITicker = time.NewTicker(trackerApp.UITickInterval)
+	trackerApp.FlushTicker = time.NewTicker(trackerApp.FlushTickInterval)
 	trackerApp.done = make(chan struct{})
-	trackerApp.LastTickStart = time.Now()
+	trackerApp.LastActivityTickStart = time.Now()
 
 	tl.Log(
 		tl.Important1, palette.GreenBold,
-		"%s tracker app. App id: '%s', window title: '%s', work dir: '%s', tick interval: %s, flush interval: '%s'",
-		"Initialized", appId, windowTitle, workDir, tickInterval, flushInterval,
+		"%s tracker app. App id: '%s', window title: '%s', work dir: '%s', UI tick interval: %s, activity tick interval: %s, flush tick interval: '%s'",
+		"Initialized", appId, windowTitle, workDir, uiTickInterval, activityTickInterval, flushInterval,
 	)
 	tl.Log(
 		tl.Notice, palette.CyanBold,

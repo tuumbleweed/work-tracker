@@ -24,11 +24,13 @@ type TrackerApp struct {
 	TasksContainer     *fyne.Container
 
 	// tickers
-	Ticker        *time.Ticker  // UI and activity clock
-	FlushTicker   *time.Ticker  // file chunk save clock
-	TickInterval  time.Duration // for Ticker
-	FlushInterval time.Duration // for FlushTicker
-	done          chan struct{}
+	UITicker             *time.Ticker  // UI clock
+	ActivityTicker       *time.Ticker  //activity clock
+	FlushTicker          *time.Ticker  // file chunk save clock
+	UITickInterval       time.Duration // for UITicker
+	ActivityTickInterval time.Duration // for ActivityTicker
+	FlushTickInterval    time.Duration // for FlushTicker
+	done                 chan struct{}
 
 	// dirs
 	Workdir         string
@@ -48,12 +50,12 @@ type TrackerApp struct {
 	Mutex sync.Mutex
 
 	// run info
-	IsRunning       bool
-	RunStart        time.Time // when last pressed "start" button
-	TaskRunStart    time.Time // when last pressed "start" button
-	ChunkStart      time.Time // when last time chunk was saved
-	LastTickStart   time.Time // when last tick has started
-	CurrentTaskName string    // which task is running right now, can be empty
+	IsRunning             bool
+	RunStart              time.Time // when last pressed "start" button
+	TaskRunStart          time.Time // when last pressed "start" button
+	ChunkStart            time.Time // when last time chunk was saved
+	LastActivityTickStart time.Time // when last tick has started
+	CurrentTaskName       string    // which task is running right now, can be empty
 }
 
 type TableRow struct {

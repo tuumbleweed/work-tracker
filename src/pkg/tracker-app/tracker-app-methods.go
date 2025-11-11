@@ -39,8 +39,9 @@ func (t *TrackerApp) Start() {
 
 	t.setContent()
 
-	go t.tickLoop()
-	go t.flushLoop()
+	go t.uiTickLoop()
+	go t.activityTickLoop()
+	go t.flushTickLoop()
 
 	t.updateInterface() // initial
 	t.Window.ShowAndRun()
@@ -70,6 +71,7 @@ func (t *TrackerApp) setContent() {
 }
 
 func (t *TrackerApp) onButtonTapped() {
+	t.refreshActivityState()
 	t.refreshState()
 	t.flushChunkIfRunning()
 	t.flipSwitch()
@@ -78,7 +80,8 @@ func (t *TrackerApp) onButtonTapped() {
 
 func (t *TrackerApp) onClose() {
 	close(t.done)
-	t.Ticker.Stop()
+	t.UITicker.Stop()
+	t.ActivityTicker.Stop()
 	t.FlushTicker.Stop()
 	// flush current run if any (only works when t.IsRunning == true)
 	t.flushChunkIfRunning()
@@ -86,10 +89,10 @@ func (t *TrackerApp) onClose() {
 	t.Window.Close()
 }
 
-func (t *TrackerApp) tickLoop() {
+func (t *TrackerApp) uiTickLoop() {
 	for {
 		select {
-		case <-t.Ticker.C:
+		case <-t.UITicker.C:
 			t.refreshState()
 			t.updateInterface()
 		case <-t.done:
@@ -98,7 +101,18 @@ func (t *TrackerApp) tickLoop() {
 	}
 }
 
-func (t *TrackerApp) flushLoop() {
+func (t *TrackerApp) activityTickLoop() {
+	for {
+		select {
+		case <-t.ActivityTicker.C:
+			t.refreshActivityState()
+		case <-t.done:
+			return
+		}
+	}
+}
+
+func (t *TrackerApp) flushTickLoop() {
 	for {
 		select {
 		case <-t.FlushTicker.C:
@@ -147,7 +161,7 @@ func (t *TrackerApp) updateInterface() {
 
 	activeToday = Clamp(activeToday, 0, workedToday)
 	todayAverageActivityPercentage := getActivityPercentage(activeToday, workedToday)
-	lastTickActivityPercentage := getActivityPercentage(lastTickActiveDuration, t.TickInterval)
+	lastTickActivityPercentage := getActivityPercentage(lastTickActiveDuration, time.Since(t.LastActivityTickStart))
 
 	clockText := formatDuration(workedToday)
 
@@ -201,22 +215,47 @@ Update TrackerApp underlying paramenters. Runs every tick.
 Do it here instead of doing everything in updateInterface.
 */
 func (t *TrackerApp) refreshState() {
-	tl.Log(tl.Verbose, palette.Blue, "%s", "Refreshing state")
+	tl.Log(tl.Verbose, palette.Blue, "%s", "Refreshing UI state")
 
 	now := time.Now()
 
 	t.Mutex.Lock()
 	// no state updates if not running.
 	if !t.IsRunning {
-		tl.Log(tl.Verbose1, palette.Cyan, "%s", "No need to refresh state")
-		t.LastTickStart = now
+		tl.Log(tl.Verbose1, palette.Cyan, "%s", "No need to refresh UI state")
+		t.Mutex.Unlock()
+		return
+	}
+
+	// worked before this run + this run
+	workedThisRun := now.Sub(t.RunStart)
+	workedThisRunOnTask := now.Sub(t.TaskRunStart)
+	t.WorkedToday = t.WorkedTodayBeforeStartingThisRun + workedThisRun
+	t.TimeByTask[t.CurrentTaskName] = t.TimeByTaskBeforeStartingThisRun[t.CurrentTaskName] + workedThisRunOnTask
+
+	t.Mutex.Unlock()
+
+	tl.Log(tl.Verbose1, palette.Green, "%s", "Refreshed UI state")
+}
+
+// same as refreshState, but only update activity
+func (t *TrackerApp) refreshActivityState() {
+	tl.Log(tl.Verbose, palette.Blue, "%s", "Refreshing activity state")
+
+	now := time.Now()
+
+	t.Mutex.Lock()
+	// no state updates if not running.
+	if !t.IsRunning {
+		tl.Log(tl.Verbose1, palette.Cyan, "%s", "No need to refresh activity state")
+		t.LastActivityTickStart = now
 		t.Mutex.Unlock()
 		return
 	}
 
 	idleMs := tryXprintidle() // milliseconds since last input (may be -1 on error)
 	t.LastTickActiveDuration = 0
-	lastTickDurationMs := time.Since(t.LastTickStart).Milliseconds()
+	lastTickDurationMs := time.Since(t.LastActivityTickStart).Milliseconds()
 	var activeMs int64
 	if idleMs >= lastTickDurationMs {
 		// if was idle this whole time block or longer
@@ -228,19 +267,15 @@ func (t *TrackerApp) refreshState() {
 	}
 	t.LastTickActiveDuration = time.Duration(activeMs) * time.Millisecond
 
-	// worked before this run + this run
-	workedThisRun := now.Sub(t.RunStart)
-	workedThisRunOnTask := now.Sub(t.TaskRunStart)
-	t.WorkedToday = t.WorkedTodayBeforeStartingThisRun + workedThisRun
-	t.TimeByTask[t.CurrentTaskName] = t.TimeByTaskBeforeStartingThisRun[t.CurrentTaskName] + workedThisRunOnTask
 	// add last active duration to use later
 	t.ActiveToday += t.LastTickActiveDuration
 	// add last active duration to t.ActiveDuringThisChunk (it's emptied on each flush)
 	t.ActiveDuringThisChunk += t.LastTickActiveDuration
-	t.LastTickStart = now
+	t.LastActivityTickStart = now
+
 	t.Mutex.Unlock()
 
-	tl.Log(tl.Verbose1, palette.Green, "%s", "Refreshed state")
+	tl.Log(tl.Verbose1, palette.Green, "%s", "Refreshed activity state")
 }
 
 // Runs when we press on start/stop button
