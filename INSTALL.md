@@ -1,5 +1,10 @@
 # Installation
 
+The steps below install Go and the libraries needed to run the GUI (Fyne) and activity tracking, then set up desktop files and example configs.
+
+> These commands target Debian/Ubuntu. For other distros, install equivalent packages.
+
+## Install prerequisites & tools
 ```bash
 # install golang
 
@@ -32,3 +37,15 @@ export PATH="$HOME/go/bin:$PATH"
 cp ./cfg/example.config.json ./cfg/config.json
 cp ./cfg/example.tasks.json ./cfg/tasks.json
 ```
+
+### Notes
+
+- **Fyne demo check**: if `go run fyne.io/demo@latest` launches a demo window, your graphics/toolchain setup is good.
+- **PATH**: ensure `~/go/bin` is on your `PATH` (the line above adds it for the current shell).
+- **Desktop files**: `./scripts/install.sh` installs icons/`.desktop` entries so you can launch from your app menu.
+- **Configs**: edit `./cfg/config.json` and `./cfg/tasks.json` after copying to match your email provider and task categories.
+
+### Troubleshooting
+
+- If the demo or app fails to start on Wayland, try running under XWayland or ensure the Wayland dev packages listed above are installed.
+- On headless servers, report generation works, but the GUI requires a desktop session.
