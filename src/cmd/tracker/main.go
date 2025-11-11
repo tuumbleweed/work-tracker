@@ -11,7 +11,7 @@ import (
 
 	"work-tracker/src/pkg/config"
 	"work-tracker/src/pkg/util"
-	worktracker "work-tracker/src/pkg/work-tracker"
+	"work-tracker/src/pkg/tracker-app"
 )
 
 func main() {
@@ -34,7 +34,7 @@ func main() {
 
 	util.CreateDirIfDoesntExist(*workDir).QuitIf("error")
 
-	trackerApp, e := worktracker.InitializeTrackerApp("Worktracker", "Work Tracker", *workDir, *tasksFilePath, *uiInterval, *chunkInterval)
+	trackerApp, e := trackerapp.InitializeTrackerApp("Worktracker", "Work Tracker", *workDir, *tasksFilePath, *uiInterval, *chunkInterval)
 	e.QuitIf("error")
 	trackerApp.Start()
 }

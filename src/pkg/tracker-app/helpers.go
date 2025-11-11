@@ -1,4 +1,4 @@
-package worktracker
+package trackerapp
 
 import (
 	"fmt"
@@ -102,9 +102,9 @@ func lerpColor(c1, c2 color.NRGBA, t float64) color.NRGBA {
 
 // 0–50%: red→yellow, 50–75%: yellow→green, 75–100%: blueBase→bluePeak (no teal)
 func barColorFor(p float64) color.Color {
-	red := color.NRGBA{R: 220, G: 60, B: 60, A: 255} // 0%
+	red := color.NRGBA{R: 220, G: 60, B: 60, A: 255}     // 0%
 	yellow := color.NRGBA{R: 235, G: 190, B: 50, A: 255} // 50%
-	green := color.NRGBA{R: 60, G: 180, B: 90, A: 255} // 75%
+	green := color.NRGBA{R: 60, G: 180, B: 90, A: 255}   // 75%
 	// green peak at 100% (same hue family, different brightness/sat)
 	greenPeak := color.NRGBA{R: 20, G: 180, B: 45, A: 255} // deeper/richer toward 100%
 

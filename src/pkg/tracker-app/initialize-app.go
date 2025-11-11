@@ -1,4 +1,4 @@
-package worktracker
+package trackerapp
 
 import (
 	"maps"
