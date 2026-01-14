@@ -125,10 +125,10 @@ github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
 github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
-github.com/tuumbleweed/tintlog v0.0.9 h1:BiaFPBKp2Cptqkda2fZWIfSXbQkrc8PP3/Rec5mRJ5s=
-github.com/tuumbleweed/tintlog v0.0.9/go.mod h1:ukQ86eAy9g8GHmhttPoYiPEkFeLdNQ1hZzc0QWVX3XU=
-github.com/tuumbleweed/xerr v0.0.2 h1:D8/Qff3RC2RxgRzoSkWdRF5B3TuyxaUJM/xAK4IQRfY=
-github.com/tuumbleweed/xerr v0.0.2/go.mod h1:DTRsUnCJ0ANjD+xABLphIEFJjITQHNZYQgrV2vqzyWQ=
+github.com/tuumbleweed/tintlog v0.0.10 h1:ZbfWxZ9QMy5gGYaRE8yLRVF7vMQERgrzkVxrfymx210=
+github.com/tuumbleweed/tintlog v0.0.10/go.mod h1:SEZ1bqvt40HL7EJi1K3ivvlgK01PLPxzApuMbElu2TI=
+github.com/tuumbleweed/xerr v0.0.3 h1:vyzRoA1kC3va+k9h5loVd8TNEkTbs0RKwyWcUfYSemg=
+github.com/tuumbleweed/xerr v0.0.3/go.mod h1:UqMIWEbwc+ZvrnC1zO3auRO4eVqLUZDVkl8Ak284azI=
 github.com/yuin/goldmark v1.7.8 h1:iERMLn0/QJeHFhxSt3p6PeN9mGnvIKSpG9YYorDMnic=
 github.com/yuin/goldmark v1.7.8/go.mod h1:uzxRWxtg69N339t3louHJ7+O03ezfj6PlliRlaOzY1E=
 golang.org/x/exp v0.0.0-20251023183803-a4bb9ffd2546 h1:mgKeJMpvi0yx/sU5GsxQ7p6s2wtOnGAHZWCHUM4KGzY=

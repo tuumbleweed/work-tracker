@@ -11,8 +11,8 @@ require (
 	github.com/mailgun/mailgun-go/v4 v4.23.0
 	github.com/sendgrid/rest v2.6.9+incompatible
 	github.com/sendgrid/sendgrid-go v3.16.1+incompatible
-	github.com/tuumbleweed/tintlog v0.0.9
-	github.com/tuumbleweed/xerr v0.0.2
+	github.com/tuumbleweed/tintlog v0.0.10
+	github.com/tuumbleweed/xerr v0.0.3
 	golang.org/x/exp v0.0.0-20251023183803-a4bb9ffd2546
 	golang.org/x/net v0.35.0
 )
