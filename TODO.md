@@ -10,6 +10,7 @@ than the activity poll window~~
 - ~~Flush when switching between tasks~~
 - ~~Separate UI ticks from activity ticks~~
 - Organize UI code in a better way, currently a mess, especially button handling.
+- Separate each month and year when saving .jsonl files
 
 #### Reporting
 - ~~Add an HTML report.~~
