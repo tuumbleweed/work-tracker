@@ -117,20 +117,6 @@ Day-of-week short label.
 func weekdayShort(t time.Time) string { return t.Weekday().String()[:3] }
 
 /*
-HTML helpers.
-*/
-func esc(s string) string {
-	replacer := strings.NewReplacer(
-		`&`, "&amp;",
-		`<`, "&lt;",
-		`>`, "&gt;",
-		`"`, "&quot;",
-		`'`, "&#39;",
-	)
-	return replacer.Replace(s)
-}
-
-/*
 Enumerate dates.
 */
 func enumerateDates(start, end time.Time) []time.Time {
