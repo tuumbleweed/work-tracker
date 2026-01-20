@@ -9,6 +9,7 @@ build/*
 cfg/*
 # but keep example congiguration file
 !cfg/*example*
+!cfg/report-template.html
 
 
 # environment files

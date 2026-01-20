@@ -3,10 +3,73 @@ package report
 import (
 	"bytes"
 	"fmt"
+	"html/template"
 	"math"
 	"sort"
 	"time"
 )
+
+type reportTaskVM struct {
+	ColorHex string
+	Name     string
+	Duration string
+}
+
+type reportTimeSegVM struct {
+	ColorHex string
+	HeightPx int
+}
+
+type reportTimeDayVM struct {
+	ContainerHeightPx int
+	TopSpacerPx       int
+	Segments          []reportTimeSegVM
+
+	HoursLabel string
+	DayLabel   string
+}
+
+type reportActivityDayVM struct {
+	ContainerHeightPx int
+	TopSpacerPx       int
+	BarHeightPx       int
+	BarColorHex       string
+
+	PctLabel string
+	DayLabel string
+}
+
+type reportTemplateVM struct {
+	Title string
+
+	TotalWorked string
+
+	AvgActivity float64
+	// NOTE: if you want *zero* HTML generation in Go, convert buildSquares10HTML()
+	// to return data and render it in the template.
+	ActivitySquares template.HTML
+
+	Tasks []reportTaskVM
+
+	TimeByDayDays []reportTimeDayVM
+
+	ActivityByTimeDays []reportActivityDayVM
+
+	BarRefLabel string
+
+	ChartW     int
+	PadPx      int
+	BarWPx     int
+	PerDaySlot int
+
+	WeeklyMode    bool
+	ShowBarLabels bool
+
+	Hex0   string
+	Hex50  string
+	Hex75  string
+	Hex100 string
+}
 
 /*
 Render the entire HTML report into a buffer.
@@ -48,6 +111,7 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 			maxDayRowHeight = container
 		}
 	}
+	_ = maxDayRowHeight
 
 	// Precompute per-day container heights and row max for "Activity×Time"
 	smContainerHeights := make([]int, len(daySummaries))
@@ -63,6 +127,7 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 			maxSmRowHeight = container
 		}
 	}
+	_ = maxSmRowHeight
 
 	// task listing (sorted by total desc)
 	taskNames := make([]string, 0, len(totals.PerTaskTotals))
@@ -106,7 +171,7 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 		nDays = 1
 	}
 	weeklyMode := nDays <= 14
-	showBarLabels := weeklyMode // NEW: hide in-bar labels when period > 2 weeks
+	showBarLabels := weeklyMode // hide in-bar labels when period > 2 weeks
 
 	// Outputs we’ll use below
 	barW := 28
@@ -139,105 +204,26 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 		}
 	}
 
-	// ---------- Label strategy ----------
-	// Weekly: show all day names exactly like before (no clipping box).
-	// Long ranges: thin or replace with ticks; also clip width to per-day slot so text can’t spill.
+	// ---------- Label strategy (UNCHANGED semantics) ----------
 	labelStep := 0
 	useTicks := false
-	labelStyle := "font-family:Arial, sans-serif;font-size:12px;color:#555;padding-top:6px;" // weekly default
+	_ = useTicks // keep semantics; labelStep is currently 0 in your snippet
 
-	if !weeklyMode {
-		useTicks = false
-		labelStyle = fmt.Sprintf("font-family:Arial, sans-serif;font-size:12px;color:#555;padding-top:6px;width:%dpx;overflow:hidden;white-space:nowrap;line-height:1;", perDaySlot)
-	}
-
-	// ---------- HTML ----------
-	fmt.Fprintf(buf, `<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>%s</title>
-  </head>
-  <body style="margin:0;padding:0;background:#fafafa;">
-    <!-- Wrapper -->
-    <table role="presentation" width="100%%" cellpadding="0" cellspacing="0" style="max-width:760px;margin:0 auto;background:#fff;border-collapse:collapse;">
-      <tr>
-        <td style="font-family:Arial, sans-serif;color:#222;font-size:16px;padding:12px 18px;border-bottom:1px solid #eee;">
-          %s
-        </td>
-      </tr>
-
-      <!-- Summary Section -->
-      <tr>
-        <td align="center" style="padding:14px 8px;">
-          <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-            <tr valign="middle">
-              <td align="center" style="padding:0 16px;">
-                <div style="font-family:Arial, sans-serif;font-size:13px;color:#666;padding-bottom:15px;padding-top:0px;">Total Worked</div>
-                <div style="font-family:Arial, sans-serif;font-size:38px;color:#111;font-weight:bold;">%s</div>
-              </td>
-              <td align="center" style="padding:0 16px;">
-                <div style="font-family:Arial, sans-serif;font-size:13px;color:#666;padding-bottom:4px;">Avg Activity</div>
-                %s
-                <div style="font-family:Arial, sans-serif;font-size:24px;color:#111;font-weight:bold;margin-top:4px;">%.1f%%</div>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-
-      <!-- Tasks in period (vertical list, centered) -->
-      <tr>
-        <td align="center" style="padding:4px 12px 10px 12px;">
-          <div style="font-family:Arial, sans-serif;font-size:14px;color:#444;padding-bottom:6px;font-weight:bold;">Tasks in period</div>
-          <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-`,
-		reportTitle(startDate, endDate),
-		reportTitle(startDate, endDate),
-		formatDuration(totals.TotalWorked),
-		buildSquares10HTML(avgActivity, activityHex),
-		avgActivity,
-	)
-
+	// ---------- Build view-model (NO HTML HERE) ----------
+	tasksVM := make([]reportTaskVM, 0, len(taskNames))
 	for i, name := range taskNames {
 		dur := totals.PerTaskTotals[name]
-		c := taskColorHex(i, name)
-		fmt.Fprintf(buf, `            <tr>
-              <td style="padding:4px 10px;font-family:Arial, sans-serif;font-size:13px;color:#333;vertical-align:middle;text-align:center;">
-                <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 auto;">
-                  <tr>
-                    <td style="background:%s;width:12px;height:12px;line-height:0;font-size:0;">&nbsp;</td>
-                    <td style="padding-left:8px;">%s&nbsp;<span style="color:#666;">— %s</span></td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-`, c, esc(name), esc(formatDuration(dur)))
+		tasksVM = append(tasksVM, reportTaskVM{
+			ColorHex: taskColorHex(i, name),
+			Name:     name,
+			Duration: formatDuration(dur),
+		})
 	}
 
-	fmt.Fprintf(buf, `          </table>
-        </td>
-      </tr>
-
-      <!-- Time by Day (stacked per task) -->
-      <tr>
-        <td align="center" style="padding:15px 0 10px 0;">
-          <div style="font-family:Arial, sans-serif;color:#222;font-size:14px;font-weight:bold;">Time by Day (%s baseline)</div>
-        </td>
-      </tr>
-
-      <!-- Centered chart wrapper -->
-      <tr>
-        <td align="center" style="padding:2px 0 0 0;">
-          <table role="presentation" cellpadding="0" cellspacing="0" width="%d" style="border-collapse:collapse;">
-            <tr>
-              <td style="padding:0 20px;">
-                <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 auto;">
-                  <tr valign="bottom">
-`, esc(formatDuration(barRef)), chartW)
-
+	timeDaysVM := make([]reportTimeDayVM, 0, len(daySummaries))
 	for dayIdx, dsum := range daySummaries {
 		containerH := dayContainerHeights[dayIdx]
+
 		dayTotalH := segHeight(dsum.TotalDuration)
 		if dayTotalH > containerH {
 			dayTotalH = containerH
@@ -255,112 +241,38 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 			}
 		}
 
-		// NOTE: the outer <td> has only horizontal padding = pad, so the per-column
-		// width is exactly perDaySlot, matching the bar/table inside (no hidden widening).
-		fmt.Fprintf(buf, `                    <!-- Day bar -->
-                    <td align="center" style="padding:0 %dpx;">
-                      <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-                        <tr><td style="background:#e0e0e0;position:relative;width:%dpx;height:%dpx;line-height:0;font-size:0;">
-                          <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:%dpx;">
-`, pad, barW, containerH, barW)
-
-		if topSpacer > 0 {
-			fmt.Fprintf(buf, `                            <tr><td style="height:%dpx;line-height:0;font-size:0;">&nbsp;</td></tr>
-`, topSpacer)
-		}
+		segs := make([]reportTimeSegVM, 0, len(dayTasks))
 		for segIdx, tname := range dayTasks {
 			seg := segHeight(dsum.TaskDurations[tname])
 			if seg <= 0 {
 				continue
 			}
-			fmt.Fprintf(buf, `                            <tr><td style="background:%s;height:%dpx;line-height:0;font-size:0;">&nbsp;</td></tr>
-`, taskColorHex(segIdx, tname), seg)
+			segs = append(segs, reportTimeSegVM{
+				ColorHex: taskColorHex(segIdx, tname), // NOTE: matches your current behavior
+				HeightPx: seg,
+			})
 		}
 
-		// Hours label inside bar (bottom-center) — now conditional
-		hoursLabel := fmt.Sprintf("%.1fh", dsum.TotalDuration.Hours())
-		hoursLabelHTML := ""
-		if showBarLabels {
-			hoursLabelHTML = fmt.Sprintf(
-				`<div style="position:absolute;left:0;right:0;bottom:2px;text-align:center;">
-                   <span style="font-family:Arial, sans-serif;font-size:11px;color:#000;">%s</span>
-                 </div>`, esc(hoursLabel))
-		}
-
-		fmt.Fprintf(buf, `                          </table>
-                          %s
-                        </td></tr>
-                      </table>
-`, hoursLabelHTML)
-
-		// Label (weekly: full text; long range: thinned/tick/hidden)
-		var labelHTML string
+		label := ""
 		if weeklyMode {
-			labelHTML = fmt.Sprintf(`<div style="%s">%s</div>`, labelStyle, esc(weekdayShort(dsum.Date)))
+			label = weekdayShort(dsum.Date)
 		} else {
+			// keep your existing logic: labelStep currently 0 -> blanks
 			if labelStep != 0 && (dayIdx%labelStep == 0) {
-				if useTicks {
-					labelHTML = `<div style="height:8px;margin:4px auto 0;line-height:0;">
-                                   <div style="width:0;height:8px;border-left:1px solid #aaa;margin:0 auto;"></div>
-                                 </div>`
-				} else {
-					labelHTML = fmt.Sprintf(`<div style="%s">%s</div>`, labelStyle, esc(weekdayShort(dsum.Date)))
-				}
-			} else {
-				labelHTML = fmt.Sprintf(`<div style="%s"></div>`, labelStyle)
+				label = weekdayShort(dsum.Date)
 			}
 		}
 
-		fmt.Fprintf(buf, `                      %s
-                    </td>
-`, labelHTML)
+		timeDaysVM = append(timeDaysVM, reportTimeDayVM{
+			ContainerHeightPx: containerH,
+			TopSpacerPx:       topSpacer,
+			Segments:          segs,
+			HoursLabel:        fmt.Sprintf("%.1fh", dsum.TotalDuration.Hours()),
+			DayLabel:          label,
+		})
 	}
 
-	fmt.Fprintf(buf, `                  </tr>
-                </table>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-
-      <!-- Legend for tasks -->
-      <tr>
-        <td align="center" style="padding:6px 0 10px 0;">
-          <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-            <tr>
-`)
-	for idx, name := range taskNames {
-		if idx > 0 {
-			fmt.Fprintf(buf, `              <td style="width:12px;">&nbsp;</td>
-`)
-		}
-		fmt.Fprintf(buf, `              <td style="background:%s;width:10px;height:10px;line-height:0;font-size:0;">&nbsp;</td>
-              <td style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding:0 0 0 6px;">%s</td>
-`, taskColorHex(idx, name), esc(name))
-	}
-	fmt.Fprintf(buf, `            </tr>
-          </table>
-        </td>
-      </tr>
-
-      <!-- Activity × Time -->
-      <tr>
-        <td align="center" style="padding:15px 0 10px 0;">
-          <div style="font-family:Arial, sans-serif;color:#222;font-size:14px;font-weight:bold;">Activity × Time (%s baseline)</div>
-        </td>
-      </tr>
-
-      <!-- Centered chart wrapper -->
-      <tr>
-        <td align="center" style="padding:2px 0 6px 0;">
-          <table role="presentation" cellpadding="0" cellspacing="0" width="%d" style="border-collapse:collapse;">
-            <tr>
-              <td>
-                <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 auto;">
-                  <tr valign="bottom">
-`, esc(formatDuration(barRef)), chartW)
-
+	activityDaysVM := make([]reportActivityDayVM, 0, len(daySummaries))
 	for dayIdx, dsum := range daySummaries {
 		dayPct := 0.0
 		if dsum.TotalDuration > 0 {
@@ -378,93 +290,58 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 			top = 0
 		}
 
-		// Activity % label for this day — now conditional
-		pctLabel := fmt.Sprintf("%.0f%%", dayPct)
-		pctLabelHTML := ""
-		if showBarLabels {
-			pctLabelHTML = fmt.Sprintf(
-				`<div style="position:absolute;left:0;right:0;bottom:2px;text-align:center;">
-                   <span style="font-family:Arial, sans-serif;font-size:11px;color:#000;">%s</span>
-                 </div>`, esc(pctLabel))
-		}
-
-		fmt.Fprintf(buf, `                    <td align="center" style="padding:0 %dpx;">
-                      <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-                        <tr><td style="background:#e0e0e0;position:relative;width:%dpx;height:%dpx;line-height:0;font-size:0;">
-                          <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:%dpx;">
-                            <tr><td style="height:%dpx;line-height:0;font-size:0;">&nbsp;</td></tr>
-                            <tr><td style="background:%s;height:%dpx;line-height:0;font-size:0;">&nbsp;</td></tr>
-                          </table>
-                          %s
-                        </td></tr>
-                      </table>
-`, pad, barW, containerH, barW, top, hex, h, pctLabelHTML)
-
-		// Label (same rules as above)
-		var labelHTML string
+		label := ""
 		if weeklyMode {
-			labelHTML = fmt.Sprintf(`<div style="%s">%s</div>`, labelStyle, esc(weekdayShort(dsum.Date)))
+			label = weekdayShort(dsum.Date)
 		} else {
 			if labelStep != 0 && (dayIdx%labelStep == 0) {
-				if useTicks {
-					labelHTML = `<div style="height:8px;margin:4px auto 0;line-height:0;">
-                                   <div style="width:0;height:8px;border-left:1px solid #aaa;margin:0 auto;"></div>
-                                 </div>`
-				} else {
-					labelHTML = fmt.Sprintf(`<div style="%s">%s</div>`, labelStyle, esc(weekdayShort(dsum.Date)))
-				}
-			} else {
-				labelHTML = fmt.Sprintf(`<div style="%s"></div>`, labelStyle)
+				label = weekdayShort(dsum.Date)
 			}
 		}
-		fmt.Fprintf(buf, `                      %s
-                    </td>
-`, labelHTML)
+
+		activityDaysVM = append(activityDaysVM, reportActivityDayVM{
+			ContainerHeightPx: containerH,
+			TopSpacerPx:       top,
+			BarHeightPx:       h,
+			BarColorHex:       hex,
+			PctLabel:          fmt.Sprintf("%.0f%%", dayPct),
+			DayLabel:          label,
+		})
 	}
 
-	fmt.Fprintf(buf, `                  </tr>
-                </table>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
+	vm := reportTemplateVM{
+		Title: reportTitle(startDate, endDate),
 
-      <!-- Activity × Time legend -->
-      <tr>
-        <td align="center" style="padding:2px 0 20px 0;">
-          <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-            <tr>
-              <td style="background:%[1]s;width:10px;height:10px;line-height:0;font-size:0;">&nbsp;</td>
-              <td style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding:0 12px 0 6px;">0%%</td>
+		TotalWorked: formatDuration(totals.TotalWorked),
 
-              <td style="background:%[2]s;width:10px;height:10px;line-height:0;font-size:0;">&nbsp;</td>
-              <td style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding:0 12px 0 6px;">50%%</td>
+		AvgActivity:      avgActivity,
+		ActivitySquares:  template.HTML(buildSquares10HTML(avgActivity, activityHex)),
+		Tasks:            tasksVM,
+		TimeByDayDays:    timeDaysVM,
+		ActivityByTimeDays: activityDaysVM,
 
-              <td style="background:%[3]s;width:10px;height:10px;line-height:0;font-size:0;">&nbsp;</td>
-              <td style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding:0 12px 0 6px;">75%%</td>
+		BarRefLabel: formatDuration(barRef),
 
-              <td style="background:%[4]s;width:10px;height:10px;line-height:0;font-size:0;">&nbsp;</td>
-              <td style="font-family:Arial, sans-serif;font-size:12px;color:#555;padding:0 0 0 6px;">100%%</td>
-            </tr>
-          </table>
-        </td>
-      </tr>
+		ChartW:     chartW,
+		PadPx:      pad,
+		BarWPx:     barW,
+		PerDaySlot: perDaySlot,
 
-    </table> <!-- end white wrapper -->
+		WeeklyMode:    weeklyMode,
+		ShowBarLabels: showBarLabels,
 
-	<!-- Footer OUTSIDE content area -->
-    <table role="presentation" width="100%%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 auto;">
-      <tr>
-        <td align="center" style="padding:20px 0;">
-          <div style="font-family:Arial, sans-serif;font-size:12px;color:#888;">
-            Generated by Work Tracker
-          </div>
-        </td>
-      </tr>
-    </table>
+		Hex0:   hex0,
+		Hex50:  hex50,
+		Hex75:  hex75,
+		Hex100: hex100,
+	}
 
-  </body>
-</html>
-`, hex0, hex50, hex75, hex100)
+	tpl, err := template.ParseFiles("./cfg/report-template.html")
+	if err != nil {
+		// match old behavior style: fail hard rather than silently changing output
+		panic(err)
+	}
+	if err := tpl.Execute(buf, vm); err != nil {
+		panic(err)
+	}
 }
