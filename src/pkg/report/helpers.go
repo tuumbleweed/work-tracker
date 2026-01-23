@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"image/color"
 	"math"
-	"path/filepath"
 	"strings"
 	"time"
 )
@@ -126,14 +125,6 @@ func enumerateDates(start, end time.Time) []time.Time {
 	}
 	return dates
 }
-
-/*
-File name "DD-MM-YYYY.jsonl".
-*/
-func dayFilePath(dir string, date time.Time) string {
-	return filepath.Join(dir, date.Format("02-01-2006")+".jsonl")
-}
-
 
 // Gmail-safe "10 squares" indicator.
 // percent is 0..100; filled squares use fillHex, empty use #e6e6e6.

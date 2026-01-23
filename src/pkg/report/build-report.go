@@ -2,8 +2,11 @@ package report
 
 import (
 	"bytes"
+	"fmt"
 	"os"
+	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 
 	tl "github.com/tuumbleweed/tintlog/logger"
@@ -13,9 +16,16 @@ import (
 
 /*
 Build the report: read files, aggregate, render HTML, write to disk.
+
+Input layout (new):
+  <inputDir>/<YEAR>/<monthname>/<D>_<monthname>_<YEAR>.jsonl
+Example:
+  out/2026/january/23_january_2026.jsonl
 */
 func BuildReport(inputDir string, startDate, endDate time.Time, outPath string, barRef time.Duration, smooth float64) (e *xerr.Error) {
-	tl.Log(tl.Notice, palette.Blue, "%s files from '%s' for '%s'..'%s'", "Reading", inputDir, startDate.Format("02-01-2006"), endDate.Format("02-01-2006"))
+	tl.Log(tl.Notice, palette.Blue, "%s files from '%s' for '%s'..'%s'",
+		"Reading", inputDir, startDate.Format("02-01-2006"), endDate.Format("02-01-2006"),
+	)
 
 	dates := enumerateDates(startDate, endDate)
 	daySummaries := make([]DaySummary, 0, len(dates))
@@ -24,7 +34,7 @@ func BuildReport(inputDir string, startDate, endDate time.Time, outPath string, 
 	}
 
 	for _, d := range dates {
-		fp := dayFilePath(inputDir, d)
+		fp := dayFilePathYM(inputDir, d) // <-- updated path scheme (year/month)
 		sum, rerr := readDayFile(fp, d, smooth)
 		if rerr != nil {
 			return rerr
@@ -53,13 +63,31 @@ func BuildReport(inputDir string, startDate, endDate time.Time, outPath string, 
 	var buf bytes.Buffer
 	renderHTMLReport(&buf, daySummaries, totals, barRef, 200, startDate, endDate)
 
-	err := os.WriteFile(outPath, buf.Bytes(), 0o644)
-	if err != nil {
-		e = xerr.NewErrorECOL(err, "failed to write HTML report", "path", outPath)
-		return e
+	// Ensure output directory exists (range can span years/months; outPath can be anywhere)
+	outDir := filepath.Dir(outPath)
+	if mkErr := os.MkdirAll(outDir, 0o755); mkErr != nil {
+		return xerr.NewErrorECOL(mkErr, "failed to create report output directory", "dir", outDir)
 	}
-	tl.Log(tl.Notice, palette.Green, "%s report to '%s' (%s, %s days)", "Wrote", outPath, formatDuration(totals.TotalWorked), len(daySummaries))
+
+	if err := os.WriteFile(outPath, buf.Bytes(), 0o644); err != nil {
+		return xerr.NewErrorECOL(err, "failed to write HTML report", "path", outPath)
+	}
+
+	tl.Log(tl.Notice, palette.Green, "%s report to '%s' (%s, %s days)",
+		"Wrote", outPath, formatDuration(totals.TotalWorked), len(daySummaries),
+	)
 	return nil
+}
+
+// dayFilePathYM builds the per-day filepath for the new year/month layout.
+// Layout:
+//   <root>/<YYYY>/<monthname>/<D>_<monthname>_<YYYY>.jsonl
+func dayFilePathYM(root string, d time.Time) string {
+	year := d.Format("2006")
+	month := strings.ToLower(d.Format("January")) // "january"
+	day := d.Format("02")
+	fname := fmt.Sprintf("%s_%s_%s.jsonl", day, month, year)
+	return filepath.Join(root, year, month, fname)
 }
 
 // resolveRange loads the TZ and determines [startDate, endDate] from flags.
