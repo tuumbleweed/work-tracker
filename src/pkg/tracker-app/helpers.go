@@ -12,9 +12,9 @@ import (
 	"golang.org/x/exp/constraints"
 )
 
-// returns "DD-MM-YYYY" for t
+// returns "YYYY-MM-DD" for t
 func dateID(t time.Time) string {
-	return t.Format("02-01-2006")
+	return t.Format("2006-01-02")
 }
 
 func dayFilePath(workDir, dateId string) string {
