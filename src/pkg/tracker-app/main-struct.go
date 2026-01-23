@@ -34,7 +34,10 @@ type TrackerApp struct {
 
 	// dirs
 	Workdir         string
-	CurrentDateID   string
+	CurrentYear     string
+	CurrentMonth    string
+	CurrentDay      string
+	CurrentDirPath  string
 	CurrentFilePath string
 
 	// time

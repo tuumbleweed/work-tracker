@@ -13,12 +13,14 @@ import (
 )
 
 // returns "YYYY-MM-DD" for t
-func dateID(t time.Time) string {
-	return t.Format("2006-01-02")
+func dateID(t time.Time) (year, month, day string) {
+	return t.Format("2006"), t.Format("january"), t.Format("02")
 }
 
-func dayFilePath(workDir, dateId string) string {
-	return filepath.Join(workDir, dateId+".jsonl")
+func dayFilePath(workDir, year, month, day string) (currentDir, currentFile string) {
+	currentDir = filepath.Join(workDir, year, month)
+	currentFile = filepath.Join(currentDir, fmt.Sprintf("%s_%s_%s.jsonl", day, month, year))
+	return currentDir, currentFile
 }
 
 func formatDuration(d time.Duration) string {

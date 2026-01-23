@@ -7,6 +7,8 @@ import (
 	tl "github.com/tuumbleweed/tintlog/logger"
 	"github.com/tuumbleweed/tintlog/palette"
 	"github.com/tuumbleweed/xerr"
+
+	"work-tracker/src/pkg/util"
 )
 
 func InitializeTrackerApp(appId, windowTitle, workDir, tasksFilePath string, uiTickInterval, activityTickInterval, flushInterval time.Duration) (trackerApp *TrackerApp, e *xerr.Error) {
@@ -23,8 +25,12 @@ func InitializeTrackerApp(appId, windowTitle, workDir, tasksFilePath string, uiT
 
 	// determine current file path
 	trackerApp.Workdir = workDir
-	trackerApp.CurrentDateID = dateID(time.Now())
-	trackerApp.CurrentFilePath = dayFilePath(trackerApp.Workdir, trackerApp.CurrentDateID)
+	trackerApp.CurrentYear, trackerApp.CurrentMonth, trackerApp.CurrentDay = dateID(time.Now())
+	trackerApp.CurrentDirPath, trackerApp.CurrentFilePath = dayFilePath(trackerApp.Workdir, trackerApp.CurrentYear, trackerApp.CurrentMonth, trackerApp.CurrentDay)
+	e = util.EnsureDirExists(trackerApp.CurrentDirPath, 0755)
+	if e != nil {
+		return trackerApp, e
+	}
 
 	// get information about total duration and active time
 	trackerApp.WorkedToday, trackerApp.ActiveToday, trackerApp.TimeByTask, e = loadFileActivityAndDuration(trackerApp.CurrentFilePath)
@@ -53,9 +59,9 @@ func InitializeTrackerApp(appId, windowTitle, workDir, tasksFilePath string, uiT
 	)
 	tl.Log(
 		tl.Notice, palette.CyanBold,
-		"\nWorkDir: '%s'\nCurrendDateID: '%s'\nCurrentFilePath: '%s'\nWorkedToday: '%s'\nActiveToday: '%s'",
-		trackerApp.Workdir, trackerApp.CurrentDateID, trackerApp.CurrentFilePath,
-		trackerApp.WorkedToday, trackerApp.ActiveToday,
+		"\nWorkDir: '%s'\nCurrentYear: '%s'\nCurrentMonth: '%s'\nCurrentDay: '%s'\nCurrentFilePath: '%s'\nWorkedToday: '%s'\nActiveToday: '%s'",
+		trackerApp.Workdir, trackerApp.CurrentYear, trackerApp.CurrentMonth, trackerApp.CurrentDay,
+		trackerApp.CurrentFilePath, trackerApp.WorkedToday, trackerApp.ActiveToday,
 	)
 	return trackerApp, nil
 }
