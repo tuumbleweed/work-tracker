@@ -91,12 +91,13 @@ func (t *TrackerApp) onClose() {
 	// remove tray icon/menu BEFORE quitting (desktop only)
 	if t.DeskApp != nil {
 		fyne.Do(func() {
-			t.DeskApp.SetSystemTrayMenu(nil)
-			t.DeskApp.SetSystemTrayIcon(nil)
+			t.DeskApp.SetSystemTrayMenu(fyne.NewMenu("")) // non-nil empty menu
+			// optional: leave icon alone; process exit removes it
+			// t.DeskApp.SetSystemTrayIcon(t.TrayIconBlue)
 		})
 	}
 
-	t.Window.Close()
+	t.App.Quit()
 }
 
 func (t *TrackerApp) uiTickLoop() {
