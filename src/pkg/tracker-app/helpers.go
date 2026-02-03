@@ -5,6 +5,7 @@ import (
 	"image/color"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -14,7 +15,7 @@ import (
 
 // returns "YYYY-MM-DD" for t
 func dateID(t time.Time) (year, month, day string) {
-	return t.Format("2006"), t.Format("january"), t.Format("02")
+	return t.Format("2006"), strings.ToLower(t.Format("January")), t.Format("02")
 }
 
 func dayFilePath(workDir, year, month, day string) (currentDir, currentFile string) {
