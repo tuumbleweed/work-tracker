@@ -88,6 +88,14 @@ func (t *TrackerApp) onClose() {
 	// flush current run if any (only works when t.IsRunning == true)
 	t.flushChunkIfRunning()
 
+	// remove tray icon/menu BEFORE quitting (desktop only)
+	if t.DeskApp != nil {
+		fyne.Do(func() {
+			t.DeskApp.SetSystemTrayMenu(nil)
+			t.DeskApp.SetSystemTrayIcon(nil)
+		})
+	}
+
 	t.Window.Close()
 }
 
@@ -291,6 +299,7 @@ func (t *TrackerApp) flipSwitch() {
 		t.RunStart = now
 		t.TaskRunStart = now
 		t.ChunkStart = now
+		t.setTrayIcon(t.TrayIconGreen)
 	} else {
 		// stopping
 		t.IsRunning = false
@@ -299,6 +308,7 @@ func (t *TrackerApp) flipSwitch() {
 		t.WorkedTodayBeforeStartingThisRun = t.WorkedToday
 		// set new t.TimeByTaskBeforeStartingThisRun
 		maps.Copy(t.TimeByTaskBeforeStartingThisRun, t.TimeByTask)
+		t.setTrayIcon(t.TrayIconBlue)
 	}
 	t.CurrentTaskName = "" // set to empty here, can be overriden later
 	t.Mutex.Unlock()
@@ -317,4 +327,30 @@ func (t *TrackerApp) flushChunkIfRunning() {
 		t.ChunkStart = now
 	}
 	t.Mutex.Unlock()
+}
+
+func (t *TrackerApp) setTrayIcon(res fyne.Resource) {
+	if t == nil {
+		return
+	}
+	if t.DeskApp == nil {
+		return
+	}
+	if res == nil {
+		return
+	}
+
+	drv := t.App.Driver()
+	if drv == nil {
+		return
+	}
+
+	fyne.Do(func() {
+		t.DeskApp.SetSystemTrayIcon(res)
+
+		// Optional: if you want the window icon to match too
+		if t.Window != nil {
+			t.Window.SetIcon(res)
+		}
+	})
 }

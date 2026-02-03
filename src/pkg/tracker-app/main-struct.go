@@ -6,6 +6,7 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -59,6 +60,11 @@ type TrackerApp struct {
 	ChunkStart            time.Time // when last time chunk was saved
 	LastActivityTickStart time.Time // when last tick has started
 	CurrentTaskName       string    // which task is running right now, can be empty
+
+	// tray
+	DeskApp       desktop.App
+	TrayIconBlue  fyne.Resource
+	TrayIconGreen fyne.Resource
 }
 
 type TableRow struct {
