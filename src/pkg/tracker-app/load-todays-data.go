@@ -60,7 +60,7 @@ func loadFileActivityAndDuration(filePath string) (totalDuration, totalActiveTim
 			tl.Log(
 				tl.Notice,
 				palette.Orange,
-				"Skipping malformed JSON at line %v in '%s': %s; error: %v",
+				"Skipping malformed JSON at line %v in '%s':\n%s\nError: %v",
 				lineNumber,
 				filePath,
 				trimmedLine,
