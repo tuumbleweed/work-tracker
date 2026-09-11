@@ -57,14 +57,16 @@ func loadFileActivityAndDuration(filePath string) (totalDuration, totalActiveTim
 		var chunk Chunk
 		unmarshalErr := json.Unmarshal([]byte(trimmedLine), &chunk)
 		if unmarshalErr != nil {
-			e = xerr.NewErrorECML(unmarshalErr, "failed to parse JSON chunk", "line",
-				map[string]any{
-					"line_number": lineNumber,
-					"text":        trimmedLine,
-				},
+			tl.Log(
+				tl.Notice,
+				palette.Orange,
+				"Skipping malformed JSON at line %v in '%s': %s; error: %v",
+				lineNumber,
+				filePath,
+				trimmedLine,
+				unmarshalErr,
 			)
-			tl.Log(tl.Notice, palette.Purple, "Premature exit on malformed JSON at line %v in '%s'", lineNumber, filePath)
-			return totalDuration, totalActiveTime, timeByTask, e
+			continue
 		}
 
 		if chunk.StartedAt.IsZero() {
