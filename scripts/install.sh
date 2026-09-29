@@ -6,7 +6,7 @@ set -eo pipefail # Exit immediately if any command returns a non-zero status
 source "$(dirname "${BASH_SOURCE[0]}")/shared.sh"
 
 cd_to_project_dir
-build_go_binaries report tracker send-email
+build_go_binaries report tracker send-email cheat
 
 # Render templates with the detected project root
 render_desktop_templates "$THIS_PROJECT_DIR" work-tracker report
