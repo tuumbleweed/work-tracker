@@ -211,10 +211,12 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 
 	// ---------- Build view-model (NO HTML HERE) ----------
 	tasksVM := make([]reportTaskVM, 0, len(taskNames))
+	taskColors := make(map[string]string, len(taskNames))
 	for i, name := range taskNames {
 		dur := totals.PerTaskTotals[name]
+		taskColors[name] = taskColorHex(i, name)
 		tasksVM = append(tasksVM, reportTaskVM{
-			ColorHex: taskColorHex(i, name),
+			ColorHex: taskColors[name],
 			Name:     name,
 			Duration: formatDuration(dur),
 		})
@@ -242,13 +244,13 @@ func renderHTMLReport(buf *bytes.Buffer, daySummaries []DaySummary, totals Repor
 		}
 
 		segs := make([]reportTimeSegVM, 0, len(dayTasks))
-		for segIdx, tname := range dayTasks {
+		for _, tname := range dayTasks {
 			seg := segHeight(dsum.TaskDurations[tname])
 			if seg <= 0 {
 				continue
 			}
 			segs = append(segs, reportTimeSegVM{
-				ColorHex: taskColorHex(segIdx, tname), // NOTE: matches your current behavior
+				ColorHex: taskColors[tname],
 				HeightPx: seg,
 			})
 		}
