@@ -51,7 +51,7 @@ This starts 15 minutes after the last entry finishes, logs 60 minutes with
 or task:
 
 ```sh
-go run ./src/cmd/cheat --date 2026-09-28 --after 0 --minutes 30 --activity 80 --task "Game Development"
+go run ./src/cmd/cheat --date 2026-09-28 --after 1 --minutes 130 --activity 80 --task "Other Pet Projects"
 ```
 
 `--date` defaults to today in local time, `--after` to 0, and `--activity` to
