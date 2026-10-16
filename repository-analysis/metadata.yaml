@@ -1,0 +1,37 @@
+schema_version: 1
+id: work-tracker
+name: Work Tracker
+original_name: work-tracker
+short_description: A personal Go desktop application for task-based time tracking, input activity estimation, local JSONL storage, HTML reporting, and optional email delivery.
+repository:
+  local_name: work-tracker
+  url: https://github.com/tuumbleweed/work-tracker
+  relationship: standalone
+  parent_project: null
+project:
+  type: personal
+  status: active
+  categories: [tooling]
+  start_date: null
+  end_date: null
+  date_precision: unknown
+  git_first_activity: "2025-10-30"
+  git_last_activity: "2026-09-30"
+technologies:
+  languages: [Go, Bash, HTML, CSS]
+  frameworks: [Fyne]
+  databases: []
+  messaging: []
+  infrastructure: [Linux, X11]
+  tools: [Go modules, xprintidle, Mailgun, SendGrid, Amazon SES, tintlog, xerr]
+links:
+  repository: https://github.com/tuumbleweed/work-tracker
+  demo: null
+publication:
+  visibility: review_required
+  featured: false
+  show_criticism: false
+  review_status: unverified
+analysis:
+  analyzed_commit: bf7551cce4925eeabea9611923cc65e2b85c5da0
+  analyzed_at: "2026-10-15"
