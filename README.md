@@ -52,6 +52,7 @@ or task:
 
 ```sh
 go run ./src/cmd/cheat --date 2026-09-28 --after 1 --minutes 130 --activity 80 --task "Other Pet Projects"
+go run ./src/cmd/cheat --after 1 --minutes 130 --activity 80 --task "Other Pet Projects"
 ```
 
 `--date` defaults to today in local time, `--after` to 0, and `--activity` to
