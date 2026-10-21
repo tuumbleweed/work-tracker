@@ -50,7 +50,7 @@ func (t *TrackerApp) Start() {
 }
 
 func (t *TrackerApp) setContent() {
-	content := container.New(
+	controls := container.New(
 		layout.NewVBoxLayout(),
 		vgap(1, 10),
 		t.Title,
@@ -64,9 +64,9 @@ func (t *TrackerApp) setContent() {
 		vgap(1, 10),
 		container.NewCenter(t.Button),
 		vgap(1, 10),
-		t.TasksContainer,
-		vgap(1, 10),
 	)
+	// The task list fills the remaining height instead of requesting its full content height.
+	content := container.NewBorder(controls, nil, nil, nil, t.TasksContainer)
 	t.Window.SetContent(container.NewPadded(content))
 }
 

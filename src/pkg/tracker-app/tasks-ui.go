@@ -139,7 +139,8 @@ func (t *TrackerApp) makeTasksUI(tasks []Task) *fyne.Container {
 		rows.Add(row)
 	}
 
-	return container.NewVBox(sectionTitle, header, rows)
+	// Keep the heading visible while rows scroll without increasing the window minimum height.
+	return container.NewBorder(container.NewVBox(sectionTitle, header), nil, nil, nil, container.NewVScroll(rows))
 }
 
 func labelHeader(s string) *widget.Label {
